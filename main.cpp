@@ -11,24 +11,15 @@ int main() {
     uint32_t num_required_exts;
     auto required_ext = glfwGetRequiredInstanceExtensions(&num_required_exts);
     std::vector<const char *> extensions(num_required_exts);
-    std::cout
-        << "Required extensions ("
-        << num_required_exts
-        << "):"
-        << std::endl;
+    std::cout << "Required extensions (" << num_required_exts << "):" << std::endl;
     for (uint32_t i = 0u; i < num_required_exts; i++) {
         std::cout << '\t' << required_ext[i] << std::endl;
         extensions[i] = required_ext[i];
     }
 
-    std::vector<const char *> layers = {
-        "VK_LAYER_LUNARG_standard_validation"
-    };
+    std::vector<const char *> layers = { "VK_LAYER_LUNARG_standard_validation" };
 
-    const auto app_info =
-        vk::ApplicationInfo(
-            "Application",
-            VK_MAKE_VERSION(0, 1, 0));
+    const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
     auto instance =
         vk::createInstanceUnique(
             vk::InstanceCreateInfo()
@@ -68,21 +59,10 @@ int main() {
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-    GLFWwindow *window =
-        glfwCreateWindow(
-            600,
-            500,
-            "Application",
-            nullptr,
-            nullptr);
+    GLFWwindow *window = glfwCreateWindow(600, 500, "Application", nullptr, nullptr);
 
     VkSurfaceKHR surface;
-    const auto result =
-        glfwCreateWindowSurface(
-            instance.get(),
-            window,
-            nullptr,
-            &surface);
+    const auto result = glfwCreateWindowSurface(instance.get(), window, nullptr, &surface);
     if (result != VK_SUCCESS) {
         std::cerr << "Failed to create window surface" << std::endl;
         return EXIT_FAILURE;

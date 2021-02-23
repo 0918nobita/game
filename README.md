@@ -1,11 +1,19 @@
 # ノベルゲーム
 
+## Build
+
 ```bash
 mkdir -p cmake-build-debug
 cd cmake-build-debug
 cmake ..
 make
 ./Game
+```
+
+## Lint
+
+```bash
+cpplint --recursive --quiet .
 ```
 
 ## Vulkan わからん
