@@ -5,6 +5,10 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
+std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType deviceType);
+void mainLoop(GLFWwindow* window);
+void cleanup(GLFWwindow* window);
+
 int main() {
     glfwInit();
 
@@ -36,25 +40,7 @@ int main() {
     std::cout << "Physical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
         const auto props = device.getProperties();
-        std::cout << '\t' << props.deviceName << " (";
-        switch (props.deviceType) {
-            case vk::PhysicalDeviceType::eCpu:
-                std::cout << "CPU";
-                break;
-            case vk::PhysicalDeviceType::eDiscreteGpu:
-                std::cout << "Discrete GPU";
-                break;
-            case vk::PhysicalDeviceType::eIntegratedGpu:
-                std::cout << "Integrated GPU";
-                break;
-            case vk::PhysicalDeviceType::eVirtualGpu:
-                std::cout << "Virtual GPU";
-                break;
-            case vk::PhysicalDeviceType::eOther:
-                std::cout << "Other GPU";
-                break;
-        }
-        std::cout << ")" << std::endl;
+        std::cout << '\t' << props.deviceName << " (" << physicalDeviceTypeToStr(props.deviceType) << ")" << std::endl;
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -68,12 +54,33 @@ int main() {
         return EXIT_FAILURE;
     }
 
+    mainLoop(window);
+    cleanup(window);
+    return EXIT_SUCCESS;
+}
+
+std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType deviceType) {
+    switch (deviceType) {
+        case vk::PhysicalDeviceType::eCpu:
+            return "CPU";
+        case vk::PhysicalDeviceType::eDiscreteGpu:
+            return "Discrete GPU";
+        case vk::PhysicalDeviceType::eIntegratedGpu:
+            return "Integrated GPU";
+        case vk::PhysicalDeviceType::eVirtualGpu:
+            return "Virtual GPU";
+        case vk::PhysicalDeviceType::eOther:
+            return "Other GPU";
+    }
+}
+
+void mainLoop(GLFWwindow* window) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
+}
 
+void cleanup(GLFWwindow* window) {
     glfwDestroyWindow(window);
     glfwTerminate();
-
-    return EXIT_SUCCESS;
 }
