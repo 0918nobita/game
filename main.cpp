@@ -2,12 +2,13 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
 std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType deviceType);
-void mainLoop(GLFWwindow* window);
-void cleanup(GLFWwindow* window);
+void mainLoop(GLFWwindow *window);
+void cleanup(GLFWwindow *window);
 
 int main() {
     glfwInit();
@@ -19,16 +20,14 @@ int main() {
         std::cout << '\t' << required_exts[i] << std::endl;
     }
 
-    std::vector<const char *> layers = { "VK_LAYER_LUNARG_standard_validation" };
+    std::vector<const char *> layers = {"VK_LAYER_LUNARG_standard_validation"};
 
     const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
-    auto instance =
-            vk::createInstanceUnique(
-                    vk::InstanceCreateInfo()
-                            .setPApplicationInfo(&app_info)
-                            .setEnabledExtensionCount(num_required_exts)
-                            .setPpEnabledExtensionNames(required_exts)
-                            .setPpEnabledLayerNames(layers.data()));
+    auto instance = vk::createInstanceUnique(vk::InstanceCreateInfo()
+                                                 .setPApplicationInfo(&app_info)
+                                                 .setEnabledExtensionCount(num_required_exts)
+                                                 .setPpEnabledExtensionNames(required_exts)
+                                                 .setPpEnabledLayerNames(layers.data()));
 
     auto devices = instance->enumeratePhysicalDevices();
     if (devices.empty()) {
@@ -38,10 +37,8 @@ int main() {
     std::cout << "Physical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
         const auto props = device.getProperties();
-        std::cout
-            << '\t' << props.deviceName
-            << " (" << physicalDeviceTypeToStr(props.deviceType)
-            << ")" << std::endl;
+        std::cout << '\t' << props.deviceName << " (" << physicalDeviceTypeToStr(props.deviceType)
+                  << ")" << std::endl;
     }
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -70,18 +67,18 @@ std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType deviceType) {
             return "Integrated GPU";
         case vk::PhysicalDeviceType::eVirtualGpu:
             return "Virtual GPU";
-        case vk::PhysicalDeviceType::eOther:
+        default:
             return "Other GPU";
     }
 }
 
-void mainLoop(GLFWwindow* window) {
+void mainLoop(GLFWwindow *window) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
 }
 
-void cleanup(GLFWwindow* window) {
+void cleanup(GLFWwindow *window) {
     glfwDestroyWindow(window);
     glfwTerminate();
 }
