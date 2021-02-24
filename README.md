@@ -1,6 +1,6 @@
 # ノベルゲーム
 
-[![Lint](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml)  [![Format](https://github.com/0918nobita/novel-game/actions/workflows/format.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/format.yml)
+[![Lint](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml)  [![Format](https://github.com/0918nobita/novel-game/actions/workflows/format.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/format.yml)  [![Test](https://github.com/0918nobita/novel-game/actions/workflows/test.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/test.yml)
 
 ## Requirements
 
