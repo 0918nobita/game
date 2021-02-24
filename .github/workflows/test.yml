@@ -1,0 +1,20 @@
+name: Test
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install libraries
+        run: |
+          sudo add-apt-repository ppa:graphics-drivers/ppa
+          sudo apt update
+          sudo apt install libvulkan-dev libglfw3-dev
+      - name: Build
+        run: |
+          mkdir -p cmake-build-debug
+          cd cmake-build-debug
+          cmake ..
+          make
