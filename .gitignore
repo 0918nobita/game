@@ -1,2 +1,7 @@
-/cmake-build-debug
 /.idea
+/.vs
+/.vscode
+/cmake-build-debug
+/packages
+/x64
+*.vcxproj.*
