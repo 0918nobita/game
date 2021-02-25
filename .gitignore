@@ -1,7 +1,10 @@
 /.idea
 /.vs
 /.vscode
-/cmake-build-debug
 /packages
 /x64
 *.vcxproj.*
+
+# Binaries
+game
+test

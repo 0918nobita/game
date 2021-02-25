@@ -9,7 +9,6 @@
 - Windows
     - Visual Studio
 - macOS / Linux
-    - CMake
     - GLFW3
 
 ## Build
@@ -21,11 +20,7 @@ Open `/NovelGame.sln` with Visual Studio
 ### macOS / Linux
 
 ```bash
-mkdir -p cmake-build-debug
-cd cmake-build-debug
-cmake ..
-make
-./Game
+make -j
 ```
 
 ## Lint
