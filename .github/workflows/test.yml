@@ -11,10 +11,13 @@ jobs:
         run: |
           sudo add-apt-repository ppa:graphics-drivers/ppa
           sudo apt update
-          sudo apt install libvulkan-dev libglfw3-dev
+          sudo apt install libvulkan-dev libglfw3-dev libgtest-dev
       - name: Build
         run: |
           mkdir -p cmake-build-debug
           cd cmake-build-debug
           cmake ..
           make
+      - name: Run tests
+        run: ./Test
+        working-directory: cmake-build-debug
