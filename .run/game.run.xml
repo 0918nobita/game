@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="game" type="CLionNativeAppRunConfigurationType" singleton="false" REDIRECT_INPUT="false" ELEVATE="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Game" TARGET_NAME="game" CONFIG_NAME="game" version="1" RUN_PATH="$PROJECT_DIR$/game">
+    <method v="2">
+      <option name="CLION.COMPOUND.BUILD" enabled="true" />
+    </method>
+  </configuration>
+</component>
