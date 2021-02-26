@@ -19,7 +19,7 @@ int main() {
     auto required_exts = glfwGetRequiredInstanceExtensions(&num_required_exts);
     std::cout << "Required extensions (" << num_required_exts << "):" << std::endl;
     for (uint32_t i = 0; i < num_required_exts; i++) {
-        std::cout << '\t' << required_exts[i] << std::endl;
+        std::cout << "  " << required_exts[i] << std::endl;
     }
 
     std::vector<const char *> layers = {"VK_LAYER_LUNARG_standard_validation"};
@@ -31,17 +31,26 @@ int main() {
                                                  .setPpEnabledExtensionNames(required_exts)
                                                  .setPpEnabledLayerNames(layers.data()));
 
+    std::cout << std::endl;
     auto devices = instance->enumeratePhysicalDevices();
     if (devices.empty()) {
         std::cerr << "No physical device available for Vulkan" << std::endl;
         return EXIT_FAILURE;
     }
-
     std::cout << "Physical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
         const auto props = device.getProperties();
-        std::cout << '\t' << props.deviceName << " (" << physicalDeviceTypeToStr(props.deviceType)
+        std::cout << "  " << props.deviceName << " (" << physicalDeviceTypeToStr(props.deviceType)
                   << ")" << std::endl;
+        std::cout << "    Queue Families:" << std::endl;
+        const auto queue_family_props = device.getQueueFamilyProperties();
+        for (const auto &prop : queue_family_props) {
+            std::cout << "      Queue family found (queue count: " << prop.queueCount << ")";
+            if ((uint32_t)prop.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                std::cout << " <- for graphics";
+            }
+            std::cout << std::endl;
+        }
     }
 
     GLFWwindow *window = glfwCreateWindow(600, 500, "Application", nullptr, nullptr);
