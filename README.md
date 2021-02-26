@@ -5,11 +5,11 @@
 ## Requirements
 
 - Common
-    - Vulkan SDK
+    - [Vulkan SDK](https://vulkan.lunarg.com/) (ex. `sudo apt install libvulkan-dev`)
 - Windows
     - Visual Studio
 - macOS / Linux
-    - GLFW3
+    - [GLFW3](https://www.glfw.org/) (ex. `sudo apt install libglfw3-dev`)
 
 ## Build
 
