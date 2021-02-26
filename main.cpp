@@ -8,6 +8,8 @@
 
 void prepareGLFW();
 std::vector<const char *> get_required_instance_extensions();
+vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
+    const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers);
 std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type);
 void main_loop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
@@ -18,12 +20,8 @@ int main() {
     auto instance_exts = get_required_instance_extensions();
 
     std::vector<const char *> layers = {"VK_LAYER_LUNARG_standard_validation"};
-    const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
-    auto instance = vk::createInstanceUnique(vk::InstanceCreateInfo()
-                                                 .setPApplicationInfo(&app_info)
-                                                 .setEnabledExtensionCount(instance_exts.size())
-                                                 .setPpEnabledExtensionNames(instance_exts.data())
-                                                 .setPpEnabledLayerNames(layers.data()));
+
+    auto instance = create_instance(instance_exts, layers);
 
     auto devices = instance->enumeratePhysicalDevices();
     if (devices.empty()) {
@@ -78,6 +76,17 @@ std::vector<const char *> get_required_instance_extensions() {
         extensions[i] = required_exts[i];
     }
     return extensions;
+}
+
+vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
+    const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers) {
+    const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
+    const auto instance_create_info = vk::InstanceCreateInfo()
+                                          .setPApplicationInfo(&app_info)
+                                          .setEnabledExtensionCount(instance_exts.size())
+                                          .setPpEnabledExtensionNames(instance_exts.data())
+                                          .setPpEnabledLayerNames(layers.data());
+    return vk::createInstanceUnique(instance_create_info);
 }
 
 std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type) {
