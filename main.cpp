@@ -12,6 +12,8 @@ void cleanup(GLFWwindow *window);
 
 int main() {
     glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, 0);
 
     uint32_t num_required_exts;
     auto required_exts = glfwGetRequiredInstanceExtensions(&num_required_exts);
@@ -41,8 +43,6 @@ int main() {
         std::cout << '\t' << props.deviceName << " (" << physicalDeviceTypeToStr(props.deviceType)
                   << ")" << std::endl;
     }
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     GLFWwindow *window = glfwCreateWindow(600, 500, "Application", nullptr, nullptr);
 
