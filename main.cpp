@@ -6,44 +6,37 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
-std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType deviceType);
-void mainLoop(GLFWwindow *window);
+void prepareGLFW();
+std::vector<const char *> get_required_instance_extensions();
+std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type);
+void main_loop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
 int main() {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, 0);
+    prepareGLFW();
 
-    uint32_t num_required_exts;
-    auto required_exts = glfwGetRequiredInstanceExtensions(&num_required_exts);
-    std::cout << "Required extensions (" << num_required_exts << "):" << std::endl;
-    for (uint32_t i = 0; i < num_required_exts; i++) {
-        std::cout << "  " << required_exts[i] << std::endl;
-    }
+    auto instance_exts = get_required_instance_extensions();
 
     std::vector<const char *> layers = {"VK_LAYER_LUNARG_standard_validation"};
-
     const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
     auto instance = vk::createInstanceUnique(vk::InstanceCreateInfo()
                                                  .setPApplicationInfo(&app_info)
-                                                 .setEnabledExtensionCount(num_required_exts)
-                                                 .setPpEnabledExtensionNames(required_exts)
+                                                 .setEnabledExtensionCount(instance_exts.size())
+                                                 .setPpEnabledExtensionNames(instance_exts.data())
                                                  .setPpEnabledLayerNames(layers.data()));
 
-    std::cout << std::endl;
     auto devices = instance->enumeratePhysicalDevices();
     if (devices.empty()) {
         std::cerr << "No physical device available for Vulkan" << std::endl;
         return EXIT_FAILURE;
     }
-    std::cout << "Physical devices (" << devices.size() << "):" << std::endl;
+    std::cout << "\nPhysical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
         const auto props = device.getProperties();
-        std::cout << "  " << props.deviceName << " (" << physicalDeviceTypeToStr(props.deviceType)
-                  << ")" << std::endl;
-        std::cout << "    Queue Families:" << std::endl;
+        std::cout << "  " << props.deviceName << " ("
+                  << physical_device_type_to_str(props.deviceType) << ")" << std::endl;
         const auto queue_family_props = device.getQueueFamilyProperties();
+        std::cout << "    Queue Families (" << queue_family_props.size() << "):" << std::endl;
         for (const auto &prop : queue_family_props) {
             std::cout << "      Queue family found (queue count: " << prop.queueCount << ")";
             if ((uint32_t)prop.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
@@ -62,13 +55,33 @@ int main() {
         return EXIT_FAILURE;
     }
 
-    mainLoop(window);
+    main_loop(window);
     cleanup(window);
     return EXIT_SUCCESS;
 }
 
-std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType deviceType) {
-    switch (deviceType) {
+/** GLFW の初期設定を済ませる */
+void prepareGLFW() {
+    glfwInit();
+    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+    glfwWindowHint(GLFW_RESIZABLE, 0);
+}
+
+/** GLFW が必要としているインスタンス拡張を一括取得する */
+std::vector<const char *> get_required_instance_extensions() {
+    uint32_t num_required_exts;
+    auto required_exts = glfwGetRequiredInstanceExtensions(&num_required_exts);
+    std::cout << "Required extensions (" << num_required_exts << "):" << std::endl;
+    std::vector<const char *> extensions(num_required_exts);
+    for (uint32_t i = 0; i < num_required_exts; i++) {
+        std::cout << "  " << required_exts[i] << std::endl;
+        extensions[i] = required_exts[i];
+    }
+    return extensions;
+}
+
+std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type) {
+    switch (device_type) {
         case vk::PhysicalDeviceType::eCpu:
             return "CPU";
         case vk::PhysicalDeviceType::eDiscreteGpu:
@@ -82,7 +95,7 @@ std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType deviceType) {
     }
 }
 
-void mainLoop(GLFWwindow *window) {
+void main_loop(GLFWwindow *window) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
