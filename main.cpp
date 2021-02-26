@@ -34,6 +34,7 @@ int main() {
         std::cerr << "No physical device available for Vulkan" << std::endl;
         return EXIT_FAILURE;
     }
+
     std::cout << "Physical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
         const auto props = device.getProperties();
