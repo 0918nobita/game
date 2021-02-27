@@ -3,6 +3,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
+#include <algorithm>
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
@@ -10,9 +11,12 @@ void prepareGLFW();
 std::vector<const char *> get_required_instance_extensions();
 vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
     const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers);
-void dump_physical_devices(const vk::Instance &instance,
-                           const std::vector<vk::PhysicalDevice> &devices);
+void dump_physical_devices(const std::vector<vk::PhysicalDevice> &devices);
 std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type);
+void select_physical_device_and_queue_family(const vk::Instance &instance,
+                                             const std::vector<vk::PhysicalDevice> &devices,
+                                             vk::PhysicalDevice *selected_device,
+                                             uint32_t *queue_family_index);
 void main_loop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
@@ -28,7 +32,13 @@ int main() {
         std::cerr << "No physical device available for Vulkan" << std::endl;
         return EXIT_FAILURE;
     }
-    dump_physical_devices(*instance, devices);
+    dump_physical_devices(devices);
+
+    vk::PhysicalDevice device;
+    uint32_t queue_family_index;
+    select_physical_device_and_queue_family(*instance, devices, &device, &queue_family_index);
+    std::cout << "\nSelected physical device: " << device.getProperties().deviceName << std::endl;
+    std::cout << "Selected queue family (index): " << queue_family_index << std::endl;
 
     GLFWwindow *window = glfwCreateWindow(600, 500, "Application", nullptr, nullptr);
 
@@ -75,26 +85,12 @@ vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
     return vk::createInstanceUnique(instance_create_info);
 }
 
-void dump_physical_devices(const vk::Instance &instance,
-                           const std::vector<vk::PhysicalDevice> &devices) {
+void dump_physical_devices(const std::vector<vk::PhysicalDevice> &devices) {
     std::cout << "\nPhysical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
         const auto props = device.getProperties();
         std::cout << "  " << props.deviceName << " ("
                   << physical_device_type_to_str(props.deviceType) << ")" << std::endl;
-        const auto queue_family_props = device.getQueueFamilyProperties();
-        std::cout << "    Queue Families (" << queue_family_props.size() << "):" << std::endl;
-        for (uint32_t i = 0; i < queue_family_props.size(); i++) {
-            const auto prop = queue_family_props[i];
-            std::cout << "      [" << i << "] queue count: " << prop.queueCount;
-            if ((uint32_t)prop.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                std::cout << ", for graphics";
-            }
-            if (glfwGetPhysicalDevicePresentationSupport(instance, device, i)) {
-                std::cout << ", with presentation support";
-            }
-            std::cout << std::endl;
-        }
     }
 }
 
@@ -111,6 +107,30 @@ std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type) {
         default:
             return "Other GPU";
     }
+}
+
+void select_physical_device_and_queue_family(const vk::Instance &instance,
+                                             const std::vector<vk::PhysicalDevice> &devices,
+                                             vk::PhysicalDevice *selected_device,
+                                             uint32_t *queue_family_index) {
+    auto device = std::find_if(
+        devices.begin(), devices.end(), [instance, queue_family_index](const auto &device) {
+            const auto queue_family_props = device.getQueueFamilyProperties();
+            for (uint32_t i = 0; i < queue_family_props.size(); i++) {
+                const auto prop = queue_family_props[i];
+                if ((uint32_t)prop.queueFlags &&
+                    glfwGetPhysicalDevicePresentationSupport(instance, device, i)) {
+                    *queue_family_index = i;
+                    return true;
+                }
+            }
+            return false;
+        });
+    if (device == devices.end()) {
+        std::cerr << "No device supports image presentation to window surface" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    *selected_device = *device;
 }
 
 void main_loop(GLFWwindow *window) {
