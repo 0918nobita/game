@@ -23,10 +23,19 @@ Open `/NovelGame.sln` with Visual Studio
 make -j
 ```
 
+CLion 向けのビルド設定：`/.run`  
+Visual Studio Code 向けのビルド/デバッグ設定：`/.vscode`
+
 ## Lint
 
 ```bash
 cpplint --recursive --quiet .
+```
+
+## Format
+
+```bash
+clang-format -i --Werror *.cpp
 ```
 
 ## Vulkan わからん
