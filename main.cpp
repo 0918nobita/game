@@ -16,7 +16,7 @@ std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type);
 void select_physical_device_and_queue_family(const vk::Instance &instance,
                                              const std::vector<vk::PhysicalDevice> &devices,
                                              vk::PhysicalDevice *selected_device,
-                                             uint32_t *queue_family_index);
+                                             uint32_t *queue_family_index, uint32_t *queue_count);
 void main_loop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
@@ -24,7 +24,7 @@ int main() {
     prepareGLFW();
 
     const auto instance_exts = get_required_instance_extensions();
-    const auto layers = {"VK_LAYER_LUNARG_standard_validation"};
+    const std::vector<const char *> layers = {"VK_LAYER_LUNARG_standard_validation"};
     const auto instance = create_instance(instance_exts, layers);
 
     const auto devices = instance->enumeratePhysicalDevices();
@@ -34,11 +34,36 @@ int main() {
     }
     dump_physical_devices(devices);
 
-    vk::PhysicalDevice device;
+    vk::PhysicalDevice physical_device;
     uint32_t queue_family_index;
-    select_physical_device_and_queue_family(*instance, devices, &device, &queue_family_index);
-    std::cout << "\nSelected physical device: " << device.getProperties().deviceName << std::endl;
-    std::cout << "Selected queue family (index): " << queue_family_index << std::endl;
+    uint32_t queue_count;
+    select_physical_device_and_queue_family(*instance, devices, &physical_device,
+                                            &queue_family_index, &queue_count);
+    std::cout << "\nSelected physical device: " << physical_device.getProperties().deviceName
+              << std::endl
+              << "Selected queue family (index): " << queue_family_index << std::endl;
+
+    const float queue_priorities[]{1.0f};
+    auto device_queue_create_infos = vk::DeviceQueueCreateInfo()
+                                         .setQueueFamilyIndex(queue_family_index)
+                                         .setQueueCount(queue_count)
+                                         .setPQueuePriorities(queue_priorities);
+
+    const auto device_extension_props = physical_device.enumerateDeviceExtensionProperties();
+    std::cout << "\nProvided device extensions (" << device_extension_props.size()
+              << "):" << std::endl;
+    for (const auto &prop : device_extension_props) {
+        std::cout << "  " << prop.extensionName << std::endl;
+    }
+
+    const std::vector<const char *> device_exts = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+
+    const auto device =
+        physical_device.createDevice(vk::DeviceCreateInfo()
+                                         .setEnabledExtensionCount(device_exts.size())
+                                         .setPpEnabledExtensionNames(device_exts.data())
+                                         .setPpEnabledLayerNames(layers.data())
+                                         .setPQueueCreateInfos(&device_queue_create_infos));
 
     GLFWwindow *window = glfwCreateWindow(600, 500, "Application", nullptr, nullptr);
 
@@ -74,6 +99,7 @@ std::vector<const char *> get_required_instance_extensions() {
     return extensions;
 }
 
+/** Vulkan インスタンスを生成する */
 vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
     const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers) {
     const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
@@ -85,6 +111,7 @@ vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
     return vk::createInstanceUnique(instance_create_info);
 }
 
+/** 物理デバイスの一覧を表示する */
 void dump_physical_devices(const std::vector<vk::PhysicalDevice> &devices) {
     std::cout << "\nPhysical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
@@ -94,6 +121,7 @@ void dump_physical_devices(const std::vector<vk::PhysicalDevice> &devices) {
     }
 }
 
+/** 物理デバイスの種別を表した文字列を取得する */
 std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type) {
     switch (device_type) {
         case vk::PhysicalDeviceType::eCpu:
@@ -109,36 +137,37 @@ std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type) {
     }
 }
 
+/** 使用する物理デバイスとキューファミリを決定する */
 void select_physical_device_and_queue_family(const vk::Instance &instance,
                                              const std::vector<vk::PhysicalDevice> &devices,
                                              vk::PhysicalDevice *selected_device,
-                                             uint32_t *queue_family_index) {
-    auto device = std::find_if(
-        devices.begin(), devices.end(), [instance, queue_family_index](const auto &device) {
-            const auto queue_family_props = device.getQueueFamilyProperties();
-            for (uint32_t i = 0; i < queue_family_props.size(); i++) {
-                const auto prop = queue_family_props[i];
-                if ((uint32_t)prop.queueFlags &&
-                    glfwGetPhysicalDevicePresentationSupport(instance, device, i)) {
-                    *queue_family_index = i;
-                    return true;
-                }
+                                             uint32_t *queue_family_index, uint32_t *queue_count) {
+    for (const auto &device : devices) {
+        const auto queue_family_props = device.getQueueFamilyProperties();
+        for (uint32_t i = 0; i < queue_family_props.size(); i++) {
+            const auto prop = queue_family_props[i];
+            if ((uint32_t)prop.queueFlags &&
+                glfwGetPhysicalDevicePresentationSupport(instance, device, i)) {
+                *queue_family_index = i;
+                *queue_count = prop.queueCount;
+                *selected_device = device;
+                return;
             }
-            return false;
-        });
-    if (device == devices.end()) {
-        std::cerr << "No device supports image presentation to window surface" << std::endl;
-        std::exit(EXIT_FAILURE);
+        }
     }
-    *selected_device = *device;
+
+    std::cerr << "No device supports image presentation to window surface" << std::endl;
+    std::exit(EXIT_FAILURE);
 }
 
+/** ウィンドウを表示したあとの描画ループ */
 void main_loop(GLFWwindow *window) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }
 }
 
+/** 終了直前の処理 */
 void cleanup(GLFWwindow *window) {
     glfwDestroyWindow(window);
     glfwTerminate();
