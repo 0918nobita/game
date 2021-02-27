@@ -10,6 +10,8 @@ void prepareGLFW();
 std::vector<const char *> get_required_instance_extensions();
 vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
     const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers);
+void dump_physical_devices(const vk::Instance &instance,
+                           const std::vector<vk::PhysicalDevice> &devices);
 std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type);
 void main_loop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
@@ -17,37 +19,21 @@ void cleanup(GLFWwindow *window);
 int main() {
     prepareGLFW();
 
-    auto instance_exts = get_required_instance_extensions();
+    const auto instance_exts = get_required_instance_extensions();
+    const auto layers = {"VK_LAYER_LUNARG_standard_validation"};
+    const auto instance = create_instance(instance_exts, layers);
 
-    std::vector<const char *> layers = {"VK_LAYER_LUNARG_standard_validation"};
-
-    auto instance = create_instance(instance_exts, layers);
-
-    auto devices = instance->enumeratePhysicalDevices();
+    const auto devices = instance->enumeratePhysicalDevices();
     if (devices.empty()) {
         std::cerr << "No physical device available for Vulkan" << std::endl;
         return EXIT_FAILURE;
     }
-    std::cout << "\nPhysical devices (" << devices.size() << "):" << std::endl;
-    for (const auto &device : devices) {
-        const auto props = device.getProperties();
-        std::cout << "  " << props.deviceName << " ("
-                  << physical_device_type_to_str(props.deviceType) << ")" << std::endl;
-        const auto queue_family_props = device.getQueueFamilyProperties();
-        std::cout << "    Queue Families (" << queue_family_props.size() << "):" << std::endl;
-        for (const auto &prop : queue_family_props) {
-            std::cout << "      Queue family found (queue count: " << prop.queueCount << ")";
-            if ((uint32_t)prop.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-                std::cout << " <- for graphics";
-            }
-            std::cout << std::endl;
-        }
-    }
+    dump_physical_devices(*instance, devices);
 
     GLFWwindow *window = glfwCreateWindow(600, 500, "Application", nullptr, nullptr);
 
     VkSurfaceKHR surface;
-    const auto result = glfwCreateWindowSurface(instance.get(), window, nullptr, &surface);
+    const auto result = glfwCreateWindowSurface(*instance, window, nullptr, &surface);
     if (result != VK_SUCCESS) {
         std::cerr << "Failed to create window surface" << std::endl;
         return EXIT_FAILURE;
@@ -87,6 +73,29 @@ vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
                                           .setPpEnabledExtensionNames(instance_exts.data())
                                           .setPpEnabledLayerNames(layers.data());
     return vk::createInstanceUnique(instance_create_info);
+}
+
+void dump_physical_devices(const vk::Instance &instance,
+                           const std::vector<vk::PhysicalDevice> &devices) {
+    std::cout << "\nPhysical devices (" << devices.size() << "):" << std::endl;
+    for (const auto &device : devices) {
+        const auto props = device.getProperties();
+        std::cout << "  " << props.deviceName << " ("
+                  << physical_device_type_to_str(props.deviceType) << ")" << std::endl;
+        const auto queue_family_props = device.getQueueFamilyProperties();
+        std::cout << "    Queue Families (" << queue_family_props.size() << "):" << std::endl;
+        for (uint32_t i = 0; i < queue_family_props.size(); i++) {
+            const auto prop = queue_family_props[i];
+            std::cout << "      [" << i << "] queue count: " << prop.queueCount;
+            if ((uint32_t)prop.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+                std::cout << ", for graphics";
+            }
+            if (glfwGetPhysicalDevicePresentationSupport(instance, device, i)) {
+                std::cout << ", with presentation support";
+            }
+            std::cout << std::endl;
+        }
+    }
 }
 
 std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type) {
