@@ -1,6 +1,10 @@
 /.idea
 /.vs
-/.vscode
+
+/.vscode/*
+!extensions.json
+!launch.json
+
 /packages
 /x64
 *.vcxproj.*
