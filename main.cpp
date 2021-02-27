@@ -17,6 +17,7 @@ void select_physical_device_and_queue_family(const vk::Instance &instance,
                                              const std::vector<vk::PhysicalDevice> &devices,
                                              vk::PhysicalDevice *selected_device,
                                              uint32_t *queue_family_index, uint32_t *queue_count);
+void dump_device_extensions(const vk::PhysicalDevice &physical_device);
 void main_loop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
@@ -42,28 +43,34 @@ int main() {
     std::cout << "\nSelected physical device: " << physical_device.getProperties().deviceName
               << std::endl
               << "Selected queue family (index): " << queue_family_index << std::endl;
+    dump_device_extensions(physical_device);
 
     const float queue_priorities[]{1.0f};
-    auto device_queue_create_infos = vk::DeviceQueueCreateInfo()
-                                         .setQueueFamilyIndex(queue_family_index)
-                                         .setQueueCount(queue_count)
-                                         .setPQueuePriorities(queue_priorities);
+    const vk::DeviceQueueCreateInfo device_queue_create_infos[]{
+        vk::DeviceQueueCreateInfo()
+            .setQueueFamilyIndex(queue_family_index)
+            .setQueueCount(queue_count)
+            .setPQueuePriorities(queue_priorities)};
 
-    const auto device_extension_props = physical_device.enumerateDeviceExtensionProperties();
-    std::cout << "\nProvided device extensions (" << device_extension_props.size()
-              << "):" << std::endl;
-    for (const auto &prop : device_extension_props) {
-        std::cout << "  " << prop.extensionName << std::endl;
-    }
-
+    // 論理デバイスを生成する
     const std::vector<const char *> device_exts = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
     const auto device =
         physical_device.createDevice(vk::DeviceCreateInfo()
                                          .setEnabledExtensionCount(device_exts.size())
                                          .setPpEnabledExtensionNames(device_exts.data())
                                          .setPpEnabledLayerNames(layers.data())
-                                         .setPQueueCreateInfos(&device_queue_create_infos));
+                                         .setQueueCreateInfoCount(1)
+                                         .setPQueueCreateInfos(device_queue_create_infos));
+
+    // コマンドプールを生成する
+    auto command_pool =
+        device.createCommandPool(vk::CommandPoolCreateInfo()
+                                     .setQueueFamilyIndex(queue_family_index)
+                                     .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer));
+
+    // デバイスキューを取得する
+    vk::Queue queue;
+    device.getQueue(queue_family_index, 0, &queue);
 
     GLFWwindow *window = glfwCreateWindow(600, 500, "Application", nullptr, nullptr);
 
@@ -111,7 +118,7 @@ vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
     return vk::createInstanceUnique(instance_create_info);
 }
 
-/** 物理デバイスの一覧を表示する */
+/** 物理デバイスを一覧表示する */
 void dump_physical_devices(const std::vector<vk::PhysicalDevice> &devices) {
     std::cout << "\nPhysical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
@@ -158,6 +165,15 @@ void select_physical_device_and_queue_family(const vk::Instance &instance,
 
     std::cerr << "No device supports image presentation to window surface" << std::endl;
     std::exit(EXIT_FAILURE);
+}
+
+/** 物理デバイスが対応しているデバイス拡張を一覧表示する */
+void dump_device_extensions(const vk::PhysicalDevice &physical_device) {
+    const auto device_extension_props = physical_device.enumerateDeviceExtensionProperties();
+    std::cout << "\nProvided device extensions (" << device_extension_props.size()
+              << "):" << std::endl;
+    for (const auto &prop : device_extension_props)
+        std::cout << "  " << prop.extensionName << std::endl;
 }
 
 /** ウィンドウを表示したあとの描画ループ */
