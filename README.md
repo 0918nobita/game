@@ -1,11 +1,12 @@
 # ノベルゲーム
 
-[![Lint](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml)  [![Format](https://github.com/0918nobita/novel-game/actions/workflows/format.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/format.yml)
+[![Lint](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml)
 
 ## Requirements
 
 - Common
     - [Vulkan SDK](https://vulkan.lunarg.com/) (ex. `sudo apt install libvulkan-dev`)
+    - Protocol Buffer Compiler / Runtime Library (ex. `sudo apt install protobuf-compiler libprotobuf-dev`)
 - Windows
     - Visual Studio
 - macOS / Linux
@@ -15,7 +16,7 @@
 
 ### Windows
 
-Open `/NovelGame.sln` with Visual Studio
+Visual Studio で `/NovelGame.sln` を開き、ビルドしてください。
 
 ### macOS / Linux
 
@@ -29,13 +30,13 @@ Visual Studio Code 向けのビルド/デバッグ設定：`/.vscode`
 ## Lint
 
 ```bash
-cpplint --recursive --quiet .
+make lint
 ```
 
 ## Format
 
 ```bash
-clang-format -i --Werror *.cpp
+make format
 ```
 
 ## Vulkan わからん

@@ -9,15 +9,9 @@
 /x64
 *.vcxproj.*
 
-# Code generated from protoc
-*.pb.cc
-*.pb.h
-
-# Binaries
-game
-load
-save
-test
+/bin
+/src/*.pb.cc
+/src/*.pb.h
 
 # Save data
 save.data

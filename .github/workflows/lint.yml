@@ -11,7 +11,11 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: '3.x'
+      - name: Install clang-format
+        run: |
+          sudo apt update
+          sudo apt install clang-format
       - name: Install cpplint
         run: pip install cpplint
       - name: Execute cpplint
-        run: cpplint --recursive --verbose=5 --exclude=save_data.pb.cc --exclude save_data.pb.h .
+        run: make lint

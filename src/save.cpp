@@ -1,11 +1,13 @@
 // Copyright 2021 Kodai Matsumoto
 
 #include <google/protobuf/repeated_field.h>
+
 #include <fstream>
 #include <iostream>
+
 #include "save_data.pb.h"
 
-int main(int argc, char* argv[]) {
+int main() {
     save_data::SaveData_Scene scene1;
     scene1.set_part(1);
     scene1.set_chapter(1);

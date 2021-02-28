@@ -1,10 +1,11 @@
-BINS := game load save test
+BINS := bin/game bin/load bin/save bin/test
 CPPFLAGS := -std=c++17 -O2 -Wall -Wextra
 UNAME := $(shell uname)
 
 all: $(BINS)
 
-game: main.cpp
+bin/game: src/main.cpp
+	mkdir -p bin
 ifeq ($(UNAME), Darwin)
 	g++ -stdlib=libc++ $(CPPFLAGS) -o $@ $? \
 		-isystem ${VULKAN_SDK}/include \
@@ -19,7 +20,8 @@ ifeq ($(UNAME), Linux)
 endif
 endif
 
-test: test.cpp
+bin/test: src/test.cpp
+	mkdir -p bin
 ifeq ($(UNAME), Darwin)
 	g++ -stdlib=libc++ $(CPPFLAGS) -o $@ $? \
 		-lc++ -lgtest -lgtest_main
@@ -30,16 +32,28 @@ ifeq ($(UNAME), Linux)
 endif
 endif
 
-save_data.pb.cc: save_data.pb.h
-save_data.pb.h: save_data.proto
+src/save_data.pb.cc: src/save_data.pb.h
+src/save_data.pb.h: src/save_data.proto
 	protoc --cpp_out=./ $?
 
-load: load.cpp save_data.pb.cc save_data.pb.h
-	g++ -pthread -o $@ $? -lprotobuf
+bin/load: src/load.cpp src/save_data.pb.cc src/save_data.pb.h
+	g++ $(CPPFLAGS) -pthread -o $@ $? -lprotobuf
 
-save: save.cpp save_data.pb.cc save_data.pb.h
-	g++ -pthread -o $@ $? -lprotobuf
+bin/save: src/save.cpp src/save_data.pb.cc src/save_data.pb.h
+	g++ $(CPPFLAGS) -pthread -o $@ $? -lprotobuf
+
+.PHONY: lint
+lint:
+	clang-format --dry-run --Werror ./src/*.cpp
+	cpplint --recursive --verbose 5 \
+		--exclude=src/save_data.pb.cc \
+		--exclude src/save_data.pb.h \
+		./src
+
+.PHONY: format
+format:
+	clang-format --Werror -i ./src/*.cpp
 
 .PHONY: clean
 clean:
-	rm -rf $(BINS) *.pb.cc *.pb.h save.data
+	rm -rf bin src/*.pb.cc src/*.pb.h save.data

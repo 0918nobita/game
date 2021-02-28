@@ -2,9 +2,10 @@
 
 #include <fstream>
 #include <iostream>
+
 #include "save_data.pb.h"
 
-int main(int argc, char* argv[]) {
+int main() {
     std::ifstream fin("save.data");
     if (!fin) {
         std::cerr << "Failed to open ./save.data" << std::endl;
