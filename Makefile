@@ -1,4 +1,4 @@
-BINS := bin/game bin/load bin/save bin/test
+BINS := bin/game bin/test
 CPPFLAGS := -std=c++17 -O2 -Wall -Wextra
 UNAME := $(shell uname)
 
@@ -32,22 +32,10 @@ ifeq ($(UNAME), Linux)
 endif
 endif
 
-src/save_data.pb.cc: src/save_data.pb.h
-src/save_data.pb.h: src/save_data.proto
-	protoc --cpp_out=./ $?
-
-bin/load: src/load.cpp src/save_data.pb.cc src/save_data.pb.h
-	g++ $(CPPFLAGS) -pthread -o $@ $? -lprotobuf
-
-bin/save: src/save.cpp src/save_data.pb.cc src/save_data.pb.h
-	g++ $(CPPFLAGS) -pthread -o $@ $? -lprotobuf
-
 .PHONY: lint
 lint:
 	clang-format --dry-run --Werror ./src/*.cpp
 	cpplint --recursive --verbose 5 \
-		--exclude=src/save_data.pb.cc \
-		--exclude src/save_data.pb.h \
 		./src
 
 .PHONY: format
@@ -56,4 +44,4 @@ format:
 
 .PHONY: clean
 clean:
-	rm -rf bin src/*.pb.cc src/*.pb.h save.data
+	rm -rf bin save.data

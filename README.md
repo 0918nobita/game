@@ -6,7 +6,6 @@
 
 - Common
     - [Vulkan SDK](https://vulkan.lunarg.com/) (ex. `sudo apt install libvulkan-dev`)
-    - Protocol Buffer Compiler / Runtime Library (ex. `sudo apt install protobuf-compiler libprotobuf-dev`)
 - Windows
     - Visual Studio
 - macOS / Linux
@@ -16,7 +15,7 @@
 
 ### Windows
 
-Visual Studio で `/NovelGame.sln` を開き、ビルドしてください。
+Visual Studio で `/NovelGame.sln` を開き、NuGet パッケージをインストールした後ビルドしてください。
 
 ### macOS / Linux
 

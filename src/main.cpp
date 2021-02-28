@@ -7,6 +7,8 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
+#include "save_data.hpp"
+
 void prepareGLFW();
 std::vector<const char *> get_required_instance_extensions();
 vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
@@ -22,6 +24,8 @@ void main_loop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
 int main() {
+    write_save_data();
+
     prepareGLFW();
 
     const auto instance_exts = get_required_instance_extensions();

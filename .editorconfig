@@ -7,8 +7,12 @@ indent_style = space
 insert_final_newline = true
 end_of_line = lf
 
-[*.{config,yml,vcxproj}]
+[*.yml]
 indent_size = 2
 
 [Makefile]
 indent_style = tab
+
+[*.{config,vcxproj}]
+indent_size = 2
+end_of_line = crlf
