@@ -4,7 +4,7 @@ UNAME := $(shell uname)
 
 all: $(BINS)
 
-bin/game: src/main.cpp
+bin/game: src/main.cpp src/save_data.cpp
 	mkdir -p bin
 ifeq ($(UNAME), Darwin)
 	g++ -stdlib=libc++ $(CPPFLAGS) -o $@ $? \
