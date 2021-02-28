@@ -63,6 +63,7 @@ int main() {
                                          .setPQueueCreateInfos(device_queue_create_infos));
 
     // コマンドプールを生成する
+    // 描画命令等を保持するコマンドバッファが、コマンドプールから割り当てられる
     auto command_pool =
         device.createCommandPool(vk::CommandPoolCreateInfo()
                                      .setQueueFamilyIndex(queue_family_index)
