@@ -1,30 +1,38 @@
-# ノベルゲーム
+# Novel Game
 
 [![Lint](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml/badge.svg)](https://github.com/0918nobita/novel-game/actions/workflows/lint.yml)
 
 ## Requirements
 
 - Common
-    - [Vulkan SDK](https://vulkan.lunarg.com/) (ex. `sudo apt install libvulkan-dev`)
+    - [Vulkan SDK](https://vulkan.lunarg.com/)
+        - Ubuntu: `sudo apt install libvulkan-dev`
 - Windows
-    - Visual Studio
+    - Visual Studio 2019
 - macOS / Linux
-    - [GLFW3](https://www.glfw.org/) (ex. `sudo apt install libglfw3-dev`)
+    - Make
+    - [GLFW3](https://www.glfw.org/)
+        - macOS: `brew install glfw`
+        - Ubuntu: `sudo apt install libglfw3-dev`
+    - [nlohmann-json](https://github.com/nlohmann/json)
+        - macOS: `brew tap nlohmann/json && brew install nlohmann-json`
+        - Ubuntu: `sudo apt install nlohmann-json3-dev`
 
 ## Build
 
 ### Windows
 
-Visual Studio で `/NovelGame.sln` を開き、NuGet パッケージをインストールした後ビルドしてください。
+1. Open `/NovelGame.sln` with Visual Studio 2019
+2. Install NuGet packages
+3. Build `NovelGame` project
 
 ### macOS / Linux
 
-```bash
-make -j
-```
+Recommended IDEs: Visual Studio Code, CLion
 
-CLion 向けのビルド設定：`/.run`  
-Visual Studio Code 向けのビルド/デバッグ設定：`/.vscode`
+```bash
+make
+```
 
 ## Lint
 
