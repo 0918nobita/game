@@ -9,6 +9,15 @@
 /x64
 *.vcxproj.*
 
+# Code generated from protoc
+*.pb.cc
+*.pb.h
+
 # Binaries
 game
+load
+save
 test
+
+# Save data
+save.data

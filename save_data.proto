@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package save_data;
+
+message SaveData {
+    message Scene {
+        int32 part = 1;
+        int32 chapter = 2;
+        int32 section = 3;
+    }
+
+    repeated Scene read_scenes = 1;
+    Scene recent_scene = 2;
+}

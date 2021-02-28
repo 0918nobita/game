@@ -14,4 +14,4 @@ jobs:
       - name: Install cpplint
         run: pip install cpplint
       - name: Execute cpplint
-        run: cpplint --recursive --verbose 5 .
+        run: cpplint --recursive --verbose=5 --exclude=save_data.pb.cc --exclude save_data.pb.h .
