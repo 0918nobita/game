@@ -25,6 +25,7 @@ void cleanup(GLFWwindow *window);
 
 int main() {
     write_save_data();
+    read_save_data();
 
     prepareGLFW();
 
@@ -68,7 +69,7 @@ int main() {
 
     // コマンドプールを生成する
     // 描画命令等を保持するコマンドバッファが、コマンドプールから割り当てられる
-    auto command_pool =
+    [[maybe_unused]] auto command_pool =
         device.createCommandPool(vk::CommandPoolCreateInfo()
                                      .setQueueFamilyIndex(queue_family_index)
                                      .setFlags(vk::CommandPoolCreateFlagBits::eResetCommandBuffer));

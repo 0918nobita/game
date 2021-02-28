@@ -31,7 +31,7 @@
 Recommended IDEs: Visual Studio Code, CLion
 
 ```bash
-make
+make -j
 ```
 
 ## Lint

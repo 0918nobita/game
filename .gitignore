@@ -10,8 +10,7 @@
 *.vcxproj.*
 
 /bin
-/src/*.pb.cc
-/src/*.pb.h
+/obj
 
 # Save data
 save.data
