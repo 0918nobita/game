@@ -1,5 +1,5 @@
 BINS := bin/game bin/test
-CPPFLAGS := -std=c++17 -O2 -Wall -Wextra
+CPPFLAGS := -std=c++20 -O2 -Wall -Wextra
 UNAME := $(shell uname)
 
 all: $(BINS)

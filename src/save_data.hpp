@@ -12,22 +12,20 @@ struct Scene {
     int part;
     int chapter;
     int section;
+    friend auto operator<=>(const Scene&, const Scene&) = default;
 };
 
-bool operator==(const Scene& lhs, const Scene& rhs);
-
-void to_json(json& j, const Scene& scene);
-void from_json(const json& j, Scene& scene);
+void to_json(json&, Scene&);
+void from_json(const json&, Scene&);
 
 struct SaveData {
     std::vector<Scene> read_scenes;
     Scene recent_scene;
+    friend auto operator<=>(const SaveData&, const SaveData&) = default;
 };
 
-bool operator==(const SaveData& lhs, const SaveData& rhs);
-
-void to_json(json& j, const SaveData& save_data);
-void from_json(const json& j, SaveData& save_data);
+void to_json(json&, const SaveData&);
+void from_json(const json&, SaveData&);
 
 void write_save_data();
 void read_save_data();

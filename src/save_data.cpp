@@ -9,10 +9,6 @@
 
 using json = nlohmann::json;
 
-bool operator==(const Scene& lhs, const Scene& rhs) {
-    return lhs.part == rhs.part && lhs.chapter == rhs.chapter && lhs.section == rhs.section;
-}
-
 void to_json(json& j, const Scene& scene) {
     j = {{"part", scene.part}, {"chapter", scene.chapter}, {"section", scene.section}};
 }
@@ -21,10 +17,6 @@ void from_json(const json& j, Scene& scene) {
     j.at("part").get_to(scene.part);
     j.at("chapter").get_to(scene.chapter);
     j.at("section").get_to(scene.section);
-}
-
-bool operator==(const SaveData& lhs, const SaveData& rhs) {
-    return lhs.read_scenes == rhs.read_scenes && lhs.recent_scene == rhs.recent_scene;
 }
 
 void to_json(json& j, const SaveData& save_data) {
