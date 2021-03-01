@@ -38,13 +38,13 @@ endif
 
 .PHONY: lint
 lint:
-	clang-format --dry-run --Werror ./src/*.cpp
+	clang-format --dry-run --Werror ./src/*.cpp ./src/*.hpp
 	cpplint --recursive --verbose 5 \
 		./src
 
 .PHONY: format
 format:
-	clang-format --Werror -i ./src/*.cpp
+	clang-format --Werror -i ./src/*.cpp ./src/*.hpp
 
 .PHONY: clean
 clean:
