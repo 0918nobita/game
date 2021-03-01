@@ -14,7 +14,7 @@ void write_save_data() {
     json scene2 = {{"part", 1}, {"chapter", 1}, {"section", 2}};
     json dat = {{"recent_scene", scene2}};
     dat["read_scenes"] = {scene1, scene2};
-    std::cout << "write: " << dat << std::endl;
+    std::cout << "write:\n" << dat.dump(2) << std::endl;
 
     const auto msgpack = json::to_msgpack(dat);
     std::ofstream fout("save.data");
@@ -31,5 +31,5 @@ void read_save_data() {
     std::copy(std::istreambuf_iterator<char>(fin), std::istreambuf_iterator<char>(),
               std::back_inserter(msgpack));
     const auto dat = json::from_msgpack(msgpack);
-    std::cout << "read: " << dat << std::endl;
+    std::cout << "\nread:\n" << dat.dump(2) << std::endl;
 }

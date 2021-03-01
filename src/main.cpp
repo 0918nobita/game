@@ -103,7 +103,7 @@ void prepareGLFW() {
 std::vector<const char *> get_required_instance_extensions() {
     uint32_t num_required_exts;
     auto required_exts = glfwGetRequiredInstanceExtensions(&num_required_exts);
-    std::cout << "Required extensions (" << num_required_exts << "):" << std::endl;
+    std::cout << "\nRequired extensions (" << num_required_exts << "):" << std::endl;
     std::vector<const char *> extensions(num_required_exts);
     for (uint32_t i = 0; i < num_required_exts; i++) {
         std::cout << "  " << required_exts[i] << std::endl;
