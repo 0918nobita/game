@@ -1,8 +1,8 @@
-BINS := bin/game bin/test
+BINS := bin/compile_time bin/game bin/test
 UNAME := $(shell uname)
 CPPFLAGS := -O2 -Wall -Wextra
 ifeq ($(UNAME), Darwin)
-CPPFLAGS += -std=c++2a
+CPPFLAGS += -std=c++2a -stdlib=libc++
 else
 CPPFLAGS += -std=c++20
 endif
@@ -16,7 +16,7 @@ obj/save_data.o: src/save_data.cpp src/save_data.hpp
 bin/game: src/main.cpp obj/save_data.o
 	mkdir -p bin
 ifeq ($(UNAME), Darwin)
-	g++ -stdlib=libc++ $(CPPFLAGS) -o bin/game src/main.cpp obj/save_data.o \
+	g++ $(CPPFLAGS) -o bin/game src/main.cpp obj/save_data.o \
 		-isystem ${VULKAN_SDK}/include \
 		-lc++ -lglfw \
 		-L${VULKAN_SDK}/lib -lvulkan
@@ -29,10 +29,13 @@ ifeq ($(UNAME), Linux)
 endif
 endif
 
+bin/compile_time: src/compile_time.cpp
+	g++ $(CPPFLAGS) -o bin/compile_time src/compile_time.cpp
+
 bin/test: src/test.cpp
 	mkdir -p bin
 ifeq ($(UNAME), Darwin)
-	g++ -stdlib=libc++ $(CPPFLAGS) -o bin/test src/test.cpp \
+	g++ $(CPPFLAGS) -o bin/test src/test.cpp \
 		-lc++ -lgtest -lgtest_main
 else
 ifeq ($(UNAME), Linux)
