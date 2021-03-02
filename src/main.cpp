@@ -94,20 +94,16 @@ int main() {
 
     // const auto cap = physical_device.getSurfaceCapabilitiesKHR(surface);
 
-    // Vulkan does not have the concept of a "default framebuffer", hence it requires an
-    // infrastructure that will own the buffers we will render to before we visualize them on the
-    // screen. This infrastructure is known as the swap chain and must be created explicitly in
-    // Vulkan. The swap chain is essentially a queue of images that are waiting to be presented to
-    // the screen. Our application will acquire such an image to draw to it, and then return it to
+    // Vulkan にデフォルトフレームバッファの概念はないため、レンダリングしたいバッファを
+    // 可視化する前に所有するインフラを必要とする。
+    // このインフラはスワップチェインとして知られており、
+    // Vulkan では明示的に生成されなければならない。
+    // スワップチェインは、本質的には画面に表示されることを待機している画像のキューである。
+
+    // Our application will acquire such an image to draw to it, and then return it to
     // the queue. How exactly the queue works and the conditions for presenting an image from the
     // queue depend on how the swap chain is set up, the general purpose of the swap chain is to
     // synchronize the presentation of images with the refresh rate of the screen.
-
-    // Vulkan にデフォルトフレームバッファの概念はないため、レンダリングしたいバッファを
-    // 可視化する前に所有するインフラを必要とする。
-    // このインフラはスワップチェインとして知られており、Vulkan
-    // では明示的に生成されなければならない。
-    // スワップチェインは、本質的には画面に表示されることを待機している画像のキューである。
 
     const auto surface_formats = physical_device.getSurfaceFormatsKHR(surface);
     std::cout << "\nNumber of supported surface formats: " << surface_formats.size() << std::endl;
