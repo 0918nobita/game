@@ -1,6 +1,11 @@
 BINS := bin/game bin/test
-CPPFLAGS := -std=c++20 -O2 -Wall -Wextra
 UNAME := $(shell uname)
+CPPFLAGS := -O2 -Wall -Wextra
+ifeq ($(UNAME), Darwin)
+CPPFLAGS += -std=c++2a
+else
+CPPFLAGS += -std=c++20
+endif
 
 all: $(BINS)
 
