@@ -1,0 +1,26 @@
+name: Build
+
+on: push
+
+jobs:
+  build:
+    runs-on: windows-2019
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Vulkan SDK
+        run: |
+          $ProgressPreference ='SilentlyContinue'
+          Invoke-WebRequest -Uri "https://sdk.lunarg.com/sdk/download/1.2.170.0/windows/VulkanSDK-1.2.170.0-Installer.exe" -OutFile Vulkan-Installer.exe
+          $installer = Start-Process -FilePath Vulkan-Installer.exe -Wait -PassThru -ArgumentList @("/S");
+          $installer.WaitForExit();
+      - uses: microsoft/setup-msbuild@v1
+      - name: Restore NuGet packages
+        run: nuget restore
+      - name: Build
+        run: msbuild .\NovelGame.sln /p:Configuration=Release
+      - name: Compress prebuilt binaries
+        run: Compress-Archive -Path .\x64\Debug\NovelGame.exe,.\x64\Debug\glfw3.dll -DestinationPath artifact
+      - uses: actions/upload-artifact@v2
+        with:
+          name: Prebuilt binaries for Windows x64
+          path: artifact.zip
