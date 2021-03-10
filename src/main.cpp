@@ -99,11 +99,9 @@ int main() {
     // このインフラはスワップチェインとして知られており、
     // Vulkan では明示的に生成されなければならない。
     // スワップチェインは、本質的には画面に表示されることを待機している画像のキューである。
-
-    // Our application will acquire such an image to draw to it, and then return it to
-    // the queue. How exactly the queue works and the conditions for presenting an image from the
-    // queue depend on how the swap chain is set up, the general purpose of the swap chain is to
-    // synchronize the presentation of images with the refresh rate of the screen.
+    // アプリケーションはそのような画像を取得して描画し、キューに戻す。
+    // キューがどのように機能するか、またキューから画像を提示する条件は、スワップチェーンがどのように設定されているかによって異なるが、
+    // スワップチェーンの一般的な目的は、画像の提示を画面のリフレッシュレートに同期させることである。
 
     const auto surface_formats = physical_device.getSurfaceFormatsKHR(surface);
     std::cout << "\nNumber of supported surface formats: " << surface_formats.size() << std::endl;
