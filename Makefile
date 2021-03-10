@@ -24,12 +24,13 @@ else
 ifeq ($(UNAME), Linux)
 	g++ $(CPPFLAGS) -pthread -o bin/game src/main.cpp obj/save_data.o \
 		-isystem ${VULKAN_SDK}/include \
-		-lglfw3 -ldl -lX11 \
+		`pkg-config --libs glfw3` -ldl -lX11 \
 		-L${VULKAN_SDK}/lib -lvulkan
 endif
 endif
 
 bin/compile_time: src/compile_time.cpp
+	mkdir -p bin
 	g++ $(CPPFLAGS) -o bin/compile_time src/compile_time.cpp
 
 bin/test: src/test.cpp
