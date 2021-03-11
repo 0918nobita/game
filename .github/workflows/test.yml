@@ -1,9 +1,9 @@
-name: Build
+name: Test
 
 on: push
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -25,3 +25,5 @@ jobs:
           sudo make install
       - name: Build
         run: make
+      - name: Run tests
+        run: ./bin/test
