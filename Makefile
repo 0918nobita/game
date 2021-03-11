@@ -1,4 +1,4 @@
-BINS := bin/compile_time bin/game bin/test
+BINS := bin/compile_time bin/database bin/game bin/test
 UNAME := $(shell uname)
 CPPFLAGS := -O2 -Wall -Wextra
 ifeq ($(UNAME), Darwin)
@@ -32,6 +32,10 @@ endif
 bin/compile_time: src/compile_time.cpp
 	mkdir -p bin
 	g++ $(CPPFLAGS) -o bin/compile_time src/compile_time.cpp
+
+bin/database: src/database.cpp
+	mkdir -p bin
+	g++ $(CPPFLAGS) -o bin/database src/database.cpp -lsqlite3
 
 bin/test: src/test.cpp
 	mkdir -p bin
