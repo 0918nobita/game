@@ -4,12 +4,12 @@
 
 ## Requirements
 
-- Common
+- Common to all supported platforms
     - [Vulkan SDK](https://vulkan.lunarg.com/)
         - Ubuntu: `sudo apt install libvulkan-dev`
-- Windows
+- Only on Windows
     - Visual Studio 2019
-- macOS / Linux
+- Common to macOS and Linux
     - Make
     - [GLFW3](https://www.glfw.org/)
         - macOS: `brew install glfw`
@@ -17,6 +17,10 @@
     - [nlohmann-json](https://github.com/nlohmann/json)
         - macOS: `brew tap nlohmann/json && brew install nlohmann-json`
         - Ubuntu: `sudo apt install nlohmann-json3-dev`
+- Only on macOS
+    - Apple clang (included in Command Line Tools for Xcode)
+- Only on Linux
+    - GNU C++ Compiler v10.x
 
 ## Build
 
