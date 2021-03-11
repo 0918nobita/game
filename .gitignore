@@ -11,6 +11,10 @@
 
 /bin
 /obj
+/tmp
 
 # Save data
-save.data
+/save.data
+
+# SQLite 3 library for Windows
+/sqlite-win64
