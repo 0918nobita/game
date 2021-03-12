@@ -14,9 +14,6 @@
     - [GLFW3](https://www.glfw.org/)
         - macOS: `brew install glfw`
         - Ubuntu: `sudo apt install libglfw3-dev`
-    - [nlohmann-json](https://github.com/nlohmann/json)
-        - macOS: `brew tap nlohmann/json && brew install nlohmann-json`
-        - Ubuntu: `sudo apt install nlohmann-json3-dev`
 - Only on macOS
     - Apple clang (included in Command Line Tools for Xcode)
 - Only on Linux

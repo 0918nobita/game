@@ -2,53 +2,59 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+#include <sqlite3.h>
 
 #include <algorithm>
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
-#include "save_data.hpp"
+sqlite3* prepareDB();
+void showRecords(sqlite3 *db);
+void closeDB(sqlite3 *db);
 
 void prepareGLFW();
-std::vector<const char *> get_required_instance_extensions();
-vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
+
+std::vector<const char *> getRequiredInstanceExtensions();
+vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> createInstance(
     const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers);
-void dump_physical_devices(const std::vector<vk::PhysicalDevice> &devices);
-std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type);
-void select_physical_device_and_queue_family(const vk::Instance &instance,
-                                             const std::vector<vk::PhysicalDevice> &devices,
-                                             vk::PhysicalDevice *selected_device,
-                                             uint32_t *queue_family_index, uint32_t *queue_count);
-void dump_device_extensions(const vk::PhysicalDevice &physical_device);
-void main_loop(GLFWwindow *window);
+void dumpPhysicalDevices(const std::vector<vk::PhysicalDevice> &devices);
+std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType device_type);
+void selectPhysicalDeviceAndQueueFamily(const vk::Instance &instance,
+                                        const std::vector<vk::PhysicalDevice> &devices,
+                                        vk::PhysicalDevice *selected_device,
+                                        uint32_t *queue_family_index, uint32_t *queue_count);
+void dumpDeviceExtensions(const vk::PhysicalDevice &physical_device);
+
+void mainLoop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
 int main() {
-    write_save_data();
-    read_save_data();
+    const auto db = prepareDB();
+    showRecords(db);
+    closeDB(db);
 
     prepareGLFW();
 
-    const auto instance_exts = get_required_instance_extensions();
+    const auto instance_exts = getRequiredInstanceExtensions();
     const std::vector<const char *> layers = {"VK_LAYER_LUNARG_standard_validation"};
-    const auto instance = create_instance(instance_exts, layers);
+    const auto instance = createInstance(instance_exts, layers);
 
     const auto devices = instance->enumeratePhysicalDevices();
     if (devices.empty()) {
         std::cerr << "No physical device available for Vulkan" << std::endl;
         return EXIT_FAILURE;
     }
-    dump_physical_devices(devices);
+    dumpPhysicalDevices(devices);
 
     vk::PhysicalDevice physical_device;
     uint32_t queue_family_index;
     uint32_t queue_count;
-    select_physical_device_and_queue_family(*instance, devices, &physical_device,
-                                            &queue_family_index, &queue_count);
-    std::cout << "\nSelected physical device: " << physical_device.getProperties().deviceName
+    selectPhysicalDeviceAndQueueFamily(*instance, devices, &physical_device, &queue_family_index,
+                                       &queue_count);
+    std::cout << "Selected physical device: " << physical_device.getProperties().deviceName
               << std::endl
               << "Selected queue family (index): " << queue_family_index << std::endl;
-    dump_device_extensions(physical_device);
+    dumpDeviceExtensions(physical_device);
 
     const float queue_priorities[]{1.0f};
     const vk::DeviceQueueCreateInfo device_queue_create_infos[]{
@@ -104,11 +110,54 @@ int main() {
     // スワップチェーンの一般的な目的は、画像の提示を画面のリフレッシュレートに同期させることである。
 
     const auto surface_formats = physical_device.getSurfaceFormatsKHR(surface);
-    std::cout << "\nNumber of supported surface formats: " << surface_formats.size() << std::endl;
+    std::cout << "Number of supported surface formats: " << surface_formats.size() << std::endl;
 
-    main_loop(window);
+    mainLoop(window);
     cleanup(window);
     return EXIT_SUCCESS;
+}
+
+sqlite3* prepareDB() {
+    sqlite3 *db = nullptr;
+    auto err = sqlite3_open("save_data.sqlite3", &db);
+    if (err != SQLITE_OK) {
+        std::cerr << "Failed to open database (errno: " << err << ")" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+    return db;
+}
+
+void showRecords(sqlite3 *db) {
+    sqlite3_stmt *stmt = nullptr;
+    auto err = sqlite3_prepare(db, "SELECT * FROM scenes", -1, &stmt, nullptr);
+    if (err != SQLITE_OK) {
+        std::cerr << "Failed to create prepared statement (errno: " << err << ")" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
+
+    while (true) {
+        auto res = sqlite3_step(stmt);
+        if (res == SQLITE_ROW) {
+            int id = sqlite3_column_int(stmt, 0);
+            auto title = sqlite3_column_text(stmt, 1);
+            std::cout << "id: " << id << ", title: " << title << std::endl;
+        } else if (res == SQLITE_DONE) {
+            break;
+        } else {
+            std::cout << "Failed to get column (errno: " << res << ")" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void closeDB(sqlite3 *db) {
+    auto err = sqlite3_close(db);
+    if (err != SQLITE_OK) {
+        std::cerr << "Failed to close database (errno: " << err << ")" << std::endl;
+        std::exit(EXIT_FAILURE);
+    }
 }
 
 /** GLFW の初期設定を済ませる */
@@ -119,10 +168,10 @@ void prepareGLFW() {
 }
 
 /** GLFW が必要としているインスタンス拡張を一括取得する */
-std::vector<const char *> get_required_instance_extensions() {
+std::vector<const char *> getRequiredInstanceExtensions() {
     uint32_t num_required_exts;
     auto required_exts = glfwGetRequiredInstanceExtensions(&num_required_exts);
-    std::cout << "\nRequired extensions (" << num_required_exts << "):" << std::endl;
+    std::cout << "Required extensions (" << num_required_exts << "):" << std::endl;
     std::vector<const char *> extensions(num_required_exts);
     for (uint32_t i = 0; i < num_required_exts; i++) {
         std::cout << "  " << required_exts[i] << std::endl;
@@ -132,7 +181,7 @@ std::vector<const char *> get_required_instance_extensions() {
 }
 
 /** Vulkan インスタンスを生成する */
-vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
+vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> createInstance(
     const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers) {
     const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
     const auto instance_create_info = vk::InstanceCreateInfo()
@@ -144,17 +193,17 @@ vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> create_instance(
 }
 
 /** 物理デバイスを一覧表示する */
-void dump_physical_devices(const std::vector<vk::PhysicalDevice> &devices) {
-    std::cout << "\nPhysical devices (" << devices.size() << "):" << std::endl;
+void dumpPhysicalDevices(const std::vector<vk::PhysicalDevice> &devices) {
+    std::cout << "Physical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
         const auto props = device.getProperties();
-        std::cout << "  " << props.deviceName << " ("
-                  << physical_device_type_to_str(props.deviceType) << ")" << std::endl;
+        std::cout << "  " << props.deviceName << " (" << physicalDeviceTypeToStr(props.deviceType)
+                  << ")" << std::endl;
     }
 }
 
 /** 物理デバイスの種別を表した文字列を取得する */
-std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type) {
+std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType device_type) {
     switch (device_type) {
         case vk::PhysicalDeviceType::eCpu:
             return "CPU";
@@ -170,10 +219,10 @@ std::string physical_device_type_to_str(vk::PhysicalDeviceType device_type) {
 }
 
 /** 使用する物理デバイスとキューファミリを決定する */
-void select_physical_device_and_queue_family(const vk::Instance &instance,
-                                             const std::vector<vk::PhysicalDevice> &devices,
-                                             vk::PhysicalDevice *selected_device,
-                                             uint32_t *queue_family_index, uint32_t *queue_count) {
+void selectPhysicalDeviceAndQueueFamily(const vk::Instance &instance,
+                                        const std::vector<vk::PhysicalDevice> &devices,
+                                        vk::PhysicalDevice *selected_device,
+                                        uint32_t *queue_family_index, uint32_t *queue_count) {
     for (const auto &device : devices) {
         const auto queue_family_props = device.getQueueFamilyProperties();
         for (uint32_t i = 0; i < queue_family_props.size(); i++) {
@@ -193,16 +242,16 @@ void select_physical_device_and_queue_family(const vk::Instance &instance,
 }
 
 /** 物理デバイスが対応しているデバイス拡張を一覧表示する */
-void dump_device_extensions(const vk::PhysicalDevice &physical_device) {
+void dumpDeviceExtensions(const vk::PhysicalDevice &physical_device) {
     const auto device_extension_props = physical_device.enumerateDeviceExtensionProperties();
-    std::cout << "\nProvided device extensions (" << device_extension_props.size()
+    std::cout << "Provided device extensions (" << device_extension_props.size()
               << "):" << std::endl;
     for (const auto &prop : device_extension_props)
         std::cout << "  " << prop.extensionName << std::endl;
 }
 
 /** ウィンドウを表示したあとの描画ループ */
-void main_loop(GLFWwindow *window) {
+void mainLoop(GLFWwindow *window) {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
     }

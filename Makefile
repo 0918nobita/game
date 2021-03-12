@@ -1,4 +1,4 @@
-BINS := bin/compile_time bin/database bin/game bin/test
+BINS := bin/compile_time bin/game bin/test
 UNAME := $(shell uname)
 CPPFLAGS := -O2 -Wall -Wextra
 ifeq ($(UNAME), Darwin)
@@ -9,22 +9,18 @@ endif
 
 all: $(BINS)
 
-obj/save_data.o: src/save_data.cpp src/save_data.hpp
-	mkdir -p obj
-	g++ $(CPPFLAGS) -c src/save_data.cpp -o obj/save_data.o
-
-bin/game: src/main.cpp obj/save_data.o
+bin/game: src/main.cpp
 	mkdir -p bin
 ifeq ($(UNAME), Darwin)
-	g++ $(CPPFLAGS) -o bin/game src/main.cpp obj/save_data.o \
+	g++ $(CPPFLAGS) -o bin/game src/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
-		-lc++ -lglfw \
+		-lc++ -lglfw -lsqlite3 \
 		-L${VULKAN_SDK}/lib -lvulkan
 else
 ifeq ($(UNAME), Linux)
-	g++ $(CPPFLAGS) -pthread -o bin/game src/main.cpp obj/save_data.o \
+	g++ $(CPPFLAGS) -pthread -o bin/game src/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
-		`pkg-config --libs glfw3` -ldl -lX11 \
+		`pkg-config --libs glfw3` -ldl -lX11 -lsqlite3 \
 		-L${VULKAN_SDK}/lib -lvulkan
 endif
 endif
@@ -32,10 +28,6 @@ endif
 bin/compile_time: src/compile_time.cpp
 	mkdir -p bin
 	g++ $(CPPFLAGS) -o bin/compile_time src/compile_time.cpp
-
-bin/database: src/database.cpp
-	mkdir -p bin
-	g++ $(CPPFLAGS) -o bin/database src/database.cpp -lsqlite3
 
 bin/test: src/test.cpp
 	mkdir -p bin
@@ -51,13 +43,13 @@ endif
 
 .PHONY: lint
 lint:
-	clang-format --dry-run --Werror ./src/*.cpp ./src/*.hpp
+	clang-format --dry-run --Werror ./src/*.cpp
 	cpplint --recursive --verbose 5 \
 		./src
 
 .PHONY: format
 format:
-	clang-format --Werror -i ./src/*.cpp ./src/*.hpp
+	clang-format --Werror -i ./src/*.cpp
 
 .PHONY: clean
 clean:
