@@ -8,9 +8,10 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
-sqlite3* prepareDB();
-void showRecords(sqlite3 *db);
-void closeDB(sqlite3 *db);
+using DB = std::shared_ptr<sqlite3>;
+
+DB prepareDB();
+void showRecords(DB db);
 
 void prepareGLFW();
 
@@ -31,7 +32,6 @@ void cleanup(GLFWwindow *window);
 int main() {
     const auto db = prepareDB();
     showRecords(db);
-    closeDB(db);
 
     prepareGLFW();
 
@@ -117,19 +117,26 @@ int main() {
     return EXIT_SUCCESS;
 }
 
-sqlite3* prepareDB() {
+DB prepareDB() {
     sqlite3 *db = nullptr;
     auto err = sqlite3_open("save_data.sqlite3", &db);
     if (err != SQLITE_OK) {
         std::cerr << "Failed to open database (errno: " << err << ")" << std::endl;
         std::exit(EXIT_FAILURE);
     }
-    return db;
+    DB ptr(db, [](sqlite3 *db) {
+        auto err = sqlite3_close(db);
+        if (err != SQLITE_OK) {
+            std::cerr << "Failed to close database (errno: " << err << ")" << std::endl;
+            std::exit(EXIT_FAILURE);
+        }
+    });
+    return ptr;
 }
 
-void showRecords(sqlite3 *db) {
+void showRecords(DB db) {
     sqlite3_stmt *stmt = nullptr;
-    auto err = sqlite3_prepare(db, "SELECT * FROM scenes", -1, &stmt, nullptr);
+    auto err = sqlite3_prepare(db.get(), "SELECT * FROM scenes", -1, &stmt, nullptr);
     if (err != SQLITE_OK) {
         std::cerr << "Failed to create prepared statement (errno: " << err << ")" << std::endl;
         std::exit(EXIT_FAILURE);
@@ -150,14 +157,6 @@ void showRecords(sqlite3 *db) {
     }
 
     sqlite3_finalize(stmt);
-}
-
-void closeDB(sqlite3 *db) {
-    auto err = sqlite3_close(db);
-    if (err != SQLITE_OK) {
-        std::cerr << "Failed to close database (errno: " << err << ")" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
 }
 
 /** GLFW の初期設定を済ませる */
