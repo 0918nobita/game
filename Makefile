@@ -9,16 +9,20 @@ endif
 
 all: $(BINS)
 
-bin/game: src/main.cpp
+obj/database.o: src/database.cpp src/database.hpp
+	mkdir -p obj
+	g++ $(CPPFLAGS) -c src/database.cpp -o obj/database.o
+
+bin/game: src/main.cpp obj/database.o
 	mkdir -p bin
 ifeq ($(UNAME), Darwin)
-	g++ $(CPPFLAGS) -o bin/game src/main.cpp \
+	g++ $(CPPFLAGS) -o bin/game obj/database.o src/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
 		-lc++ -lglfw -lsqlite3 \
 		-L${VULKAN_SDK}/lib -lvulkan
 else
 ifeq ($(UNAME), Linux)
-	g++ $(CPPFLAGS) -pthread -o bin/game src/main.cpp \
+	g++ $(CPPFLAGS) -pthread -o bin/game obj/database.o src/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
 		`pkg-config --libs glfw3` -ldl -lX11 -lsqlite3 \
 		-L${VULKAN_SDK}/lib -lvulkan
@@ -43,13 +47,12 @@ endif
 
 .PHONY: lint
 lint:
-	clang-format --dry-run --Werror ./src/*.cpp
-	cpplint --recursive --verbose 5 \
-		./src
+	clang-format --dry-run --Werror ./src/*.cpp ./src/*.hpp
+	cpplint --recursive --verbose 5 ./src
 
 .PHONY: format
 format:
-	clang-format --Werror -i ./src/*.cpp
+	clang-format --Werror -i ./src/*.cpp ./src/*.hpp
 
 .PHONY: clean
 clean:

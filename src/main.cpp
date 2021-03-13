@@ -8,10 +8,7 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
-using DB = std::shared_ptr<sqlite3>;
-
-DB prepareDB();
-void showRecords(DB db);
+#include "database.hpp"
 
 void prepareGLFW();
 
@@ -30,8 +27,8 @@ void mainLoop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
 int main() {
-    const auto db = prepareDB();
-    showRecords(db);
+    std::unique_ptr<Database> db(new SQLite3DB);
+    db->showRecords();
 
     prepareGLFW();
 
@@ -115,48 +112,6 @@ int main() {
     mainLoop(window);
     cleanup(window);
     return EXIT_SUCCESS;
-}
-
-DB prepareDB() {
-    sqlite3 *db = nullptr;
-    auto err = sqlite3_open("save_data.sqlite3", &db);
-    if (err != SQLITE_OK) {
-        std::cerr << "Failed to open database (errno: " << err << ")" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-    DB ptr(db, [](sqlite3 *db) {
-        auto err = sqlite3_close(db);
-        if (err != SQLITE_OK) {
-            std::cerr << "Failed to close database (errno: " << err << ")" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-    });
-    return ptr;
-}
-
-void showRecords(DB db) {
-    sqlite3_stmt *stmt = nullptr;
-    auto err = sqlite3_prepare(db.get(), "SELECT * FROM scenes", -1, &stmt, nullptr);
-    if (err != SQLITE_OK) {
-        std::cerr << "Failed to create prepared statement (errno: " << err << ")" << std::endl;
-        std::exit(EXIT_FAILURE);
-    }
-
-    while (true) {
-        auto res = sqlite3_step(stmt);
-        if (res == SQLITE_ROW) {
-            int id = sqlite3_column_int(stmt, 0);
-            auto title = sqlite3_column_text(stmt, 1);
-            std::cout << "id: " << id << ", title: " << title << std::endl;
-        } else if (res == SQLITE_DONE) {
-            break;
-        } else {
-            std::cout << "Failed to get column (errno: " << res << ")" << std::endl;
-            std::exit(EXIT_FAILURE);
-        }
-    }
-
-    sqlite3_finalize(stmt);
 }
 
 /** GLFW の初期設定を済ませる */
