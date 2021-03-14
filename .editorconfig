@@ -16,3 +16,6 @@ indent_style = tab
 [*.{config,vcxproj}]
 indent_size = 2
 end_of_line = crlf
+
+[*.{cpp,hpp}]
+charset = utf-8-bom

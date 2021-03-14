@@ -1,4 +1,4 @@
-// Copyright 2021 Kodai Matsumoto
+﻿// Copyright 2021 Kodai Matsumoto
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
