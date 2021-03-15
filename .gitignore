@@ -13,8 +13,7 @@
 /obj
 /tmp
 
-# Save data
-/save.data
+save_data.sqlite3
 
 # SQLite 3 library for Windows
 /sqlite-win64

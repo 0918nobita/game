@@ -47,6 +47,12 @@ make lint
 make format
 ```
 
+## Initialize database and seed it
+
+```bash
+dotnet fsi InitDB.fsx
+```
+
 ## Vulkan わからん
 
 ### パイプライン
