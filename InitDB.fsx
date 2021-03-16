@@ -2,28 +2,30 @@
 #r "nuget: Microsoft.Data.Sqlite.Core"
 
 open Microsoft.Data.Sqlite
+open System.Runtime.CompilerServices
 
+[<Struct; IsReadOnly>]
 type Scene = Scene of id : int * title : string
 
-let tableExists (conn : SqliteConnection) =
+let inline tableExists (conn : SqliteConnection) =
     use cmd = conn.CreateCommand()
     cmd.CommandText <-
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'scenes'"
     use dataReader = cmd.ExecuteReader()
     dataReader.Read()
 
-let createTable (conn : SqliteConnection) =
+let inline createTable (conn : SqliteConnection) =
     use cmd = conn.CreateCommand()
     cmd.CommandText <-
         "CREATE TABLE scenes (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL)"
     cmd.ExecuteNonQuery() |> ignore
 
-let insertRecords (conn : SqliteConnection) =
+let inline insertRecords (conn : SqliteConnection) =
     use cmd = conn.CreateCommand()
     cmd.CommandText <- "INSERT INTO scenes VALUES(1, 'hoge')"
     cmd.ExecuteNonQuery() |> ignore
 
-let selectRecords (conn : SqliteConnection) =
+let inline selectRecords (conn : SqliteConnection) =
     use cmd = conn.CreateCommand()
     cmd.CommandText <- "SELECT * FROM scenes"
     use dataReader = cmd.ExecuteReader()
