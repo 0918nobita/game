@@ -12,11 +12,11 @@
 
 void prepareGLFW();
 
-std::vector<const char *> getRequiredInstanceExtensions();
+std::vector<const char *> getRequiredInstanceExtensions() noexcept;
 vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> createInstance(
     const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers);
-void dumpPhysicalDevices(const std::vector<vk::PhysicalDevice> &devices);
-std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType device_type);
+void dumpPhysicalDevices(const std::vector<vk::PhysicalDevice> &devices) noexcept;
+std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType device_type) noexcept;
 void selectPhysicalDeviceAndQueueFamily(const vk::Instance &instance,
                                         const std::vector<vk::PhysicalDevice> &devices,
                                         vk::PhysicalDevice *selected_device,
@@ -122,7 +122,7 @@ void prepareGLFW() {
 }
 
 /** GLFW が必要としているインスタンス拡張を一括取得する */
-std::vector<const char *> getRequiredInstanceExtensions() {
+std::vector<const char *> getRequiredInstanceExtensions() noexcept {
     uint32_t num_required_exts;
     auto required_exts = glfwGetRequiredInstanceExtensions(&num_required_exts);
     std::cout << "Required extensions (" << num_required_exts << "):" << std::endl;
@@ -147,7 +147,7 @@ vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> createInstance(
 }
 
 /** 物理デバイスを一覧表示する */
-void dumpPhysicalDevices(const std::vector<vk::PhysicalDevice> &devices) {
+void dumpPhysicalDevices(const std::vector<vk::PhysicalDevice> &devices) noexcept {
     std::cout << "Physical devices (" << devices.size() << "):" << std::endl;
     for (const auto &device : devices) {
         const auto props = device.getProperties();
@@ -157,7 +157,7 @@ void dumpPhysicalDevices(const std::vector<vk::PhysicalDevice> &devices) {
 }
 
 /** 物理デバイスの種別を表した文字列を取得する */
-std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType device_type) {
+std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType device_type) noexcept {
     switch (device_type) {
         case vk::PhysicalDeviceType::eCpu:
             return "CPU";
