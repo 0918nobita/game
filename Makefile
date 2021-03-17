@@ -8,12 +8,12 @@ CPPFLAGS += -std=c++20
 endif
 
 .PHONY: build
-build: lib/libgraphics.so $(BINS) src/NovelGame/NovelGame.fsproj src/NovelGame/Program.fs
-	dotnet build src/NovelGame
+build: bin/libgraphics.so $(BINS) src/Fs/NovelGameFs.fsproj src/Fs/Program.fs
+	dotnet build src/Fs
 
-lib/libgraphics.so: src/main.cpp
-	mkdir -p lib
-	g++ $(CPPFLAGS) -fPIC -shared -o lib/libgraphics.so src/main.cpp \
+bin/libgraphics.so: src/Cpp/main.cpp
+	mkdir -p bin
+	g++ $(CPPFLAGS) -fPIC -shared -o bin/libgraphics.so src/Cpp/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
 		`pkg-config --libs glfw3` -ldl -lX11 \
 		-L${VULKAN_SDK}/lib -lvulkan
@@ -34,6 +34,17 @@ ifeq ($(UNAME), Linux)
 endif
 endif
 
+.PHONY: run
+run: bin/libgraphics.so src/Fs/NovelGameFs.fsproj src/Fs/Program.fs save_data.sqlite3
+	dotnet run -p src/Fs
+
+save_data.sqlite3: InitDB.fsx
+	dotnet fsi InitDB.fsx
+
+.PHONY: test
+test: bin/test
+	./bin/test
+
 .PHONY: lint
 lint:
 	clang-format --dry-run --Werror ./src/*.cpp
@@ -45,4 +56,4 @@ format:
 
 .PHONY: clean
 clean:
-	rm -rf bin lib obj src/NovelGame/bin src/NovelGame/obj
+	rm -rf bin obj save_data.sqlite3

@@ -17,7 +17,7 @@ let inline selectRecords (conn : SqliteConnection) =
     |> List.ofSeq
 
 module Cpp =
-    [<DllImport("lib/libgraphics.so")>]
+    [<DllImport("bin/libgraphics.so")>]
     extern int run()
 
 [<EntryPoint>]

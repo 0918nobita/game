@@ -1,20 +1,13 @@
+.ionide
+bin
+obj
+packages
+*.vcxproj.*
+
 /.idea
 /.vs
 /.vscode/*
 !extensions.json
 !launch.json
-.ionide
-
-/packages
 /x64
-*.vcxproj.*
-
-bin
-obj
-/lib
-/tmp
-
-save_data.sqlite3
-
-# SQLite 3 library for Windows
-/sqlite-win64
+/save_data.sqlite3
