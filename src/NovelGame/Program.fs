@@ -26,11 +26,18 @@ let main _ =
     printfn "isMacOS: %b" <| OperatingSystem.IsMacOS()
     printfn "isLinux: %b" <| OperatingSystem.IsLinux()
 
-    use conn = new SqliteConnection("Data Source=save_data.sqlite3")
-    conn.Open()
+    let task1 = async { Cpp.run() |> ignore }
 
-    selectRecords conn
-    |> List.iter (printfn "%O")
+    let task2 =
+        async {
+            use conn = new SqliteConnection("Data Source=save_data.sqlite3")
+            conn.Open()
+            selectRecords conn
+            |> List.iter (printfn "%O")
+        }
 
-    Cpp.run() |> ignore
+    [task1; task2]
+    |> Async.Parallel
+    |> Async.RunSynchronously
+    |> ignore
     0
