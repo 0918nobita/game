@@ -28,10 +28,6 @@
     <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
-  <ImportGroup Label="ExtensionSettings">
-  </ImportGroup>
-  <ImportGroup Label="Shared">
-  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -40,16 +36,16 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>$(VULKAN_SDK)\Include;$(ProjectDir)sqlite-win64\sqlite-amalgamation-3340100;$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>$(VULKAN_SDK)\Include;$(ProjectDir)sqlite-win64\sqlite-amalgamation-3340100;$(IncludePath)</IncludePath>
+    <IncludePath>$(VULKAN_SDK)\Include;$(IncludePath)</IncludePath>
     <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Link>
-      <AdditionalDependencies>$(ProjectDir)sqlite-win64\sqlite3.lib;$(VULKAN_SDK)\Lib\vulkan-1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(VULKAN_SDK)\Lib\vulkan-1.lib</AdditionalDependencies>
     </Link>
     <ClCompile>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -57,14 +53,6 @@
       <AdditionalOptions>/utf-8</AdditionalOptions>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
-    <PostBuildEvent>
-      <Command>ROBOCOPY $(ProjectDir)sqlite-win64 $(OutDir) sqlite3.dll /xo /COPY:DT
-ROBOCOPY $(ProjectDIr) $(OutDir) save_data.sqlite3 /xo /COPY:DT
-IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Message>必要なdllがターゲットディレクトリに存在しない場合、コピーする</Message>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -73,26 +61,14 @@ IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
       <LanguageStandard_C>stdc17</LanguageStandard_C>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>$(ProjectDir)sqlite-win64\sqlite3.lib;$(VULKAN_SDK)\Lib\vulkan-1.lib</AdditionalDependencies>
+      <AdditionalDependencies>$(VULKAN_SDK)\Lib\vulkan-1.lib</AdditionalDependencies>
     </Link>
-    <PostBuildEvent>
-      <Command>ROBOCOPY $(ProjectDir)sqlite-win64 $(OutDir) sqlite3.dll /xo /COPY:DT
-ROBOCOPY $(ProjectDIr) $(OutDir) save_data.sqlite3 /xo /COPY:DT
-IF %ERRORLEVEL% LSS 8 EXIT 0</Command>
-    </PostBuildEvent>
-    <PostBuildEvent>
-      <Message>必要なdllがターゲットディレクトリに存在しない場合、コピーする</Message>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\database.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\database.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
