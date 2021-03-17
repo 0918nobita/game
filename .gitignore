@@ -11,6 +11,7 @@
 
 bin
 obj
+/lib
 /tmp
 
 save_data.sqlite3

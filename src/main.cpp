@@ -2,13 +2,10 @@
 
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <sqlite3.h>
 
 #include <algorithm>
 #include <iostream>
 #include <vulkan/vulkan.hpp>
-
-#include "database.hpp"
 
 void prepareGLFW();
 
@@ -26,10 +23,7 @@ void dumpDeviceExtensions(const vk::PhysicalDevice &physical_device);
 void mainLoop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
-int main() {
-    std::unique_ptr<Database> db(new SQLite3DB);
-    db->showRecords();
-
+extern "C" int run() {
     prepareGLFW();
 
     const auto instance_exts = getRequiredInstanceExtensions();

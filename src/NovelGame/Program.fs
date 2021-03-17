@@ -1,6 +1,7 @@
 open Microsoft.Data.Sqlite
 open System
 open System.Runtime.CompilerServices
+open System.Runtime.InteropServices
 
 [<Struct; IsReadOnly>]
 type Scene = Scene of id : int * title : string
@@ -15,6 +16,10 @@ let inline selectRecords (conn : SqliteConnection) =
     }
     |> List.ofSeq
 
+module Cpp =
+    [<DllImport("lib/libgraphics.so")>]
+    extern int run()
+
 [<EntryPoint>]
 let main _ =
     printfn "isWindows: %b" <| OperatingSystem.IsWindows()
@@ -26,4 +31,6 @@ let main _ =
 
     selectRecords conn
     |> List.iter (printfn "%O")
+
+    Cpp.run() |> ignore
     0
