@@ -1,16 +1,16 @@
 /.idea
 /.vs
-
 /.vscode/*
 !extensions.json
 !launch.json
+.ionide
 
 /packages
 /x64
 *.vcxproj.*
 
-/bin
-/obj
+bin
+obj
 /tmp
 
 save_data.sqlite3
