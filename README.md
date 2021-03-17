@@ -42,6 +42,12 @@ make
 make run
 ```
 
+### Test
+
+```bash
+make test
+```
+
 ### Lint
 
 ```bash
