@@ -10,4 +10,5 @@ packages
 !extensions.json
 !launch.json
 /x64
+/libnovel_game.so
 /save_data.sqlite3

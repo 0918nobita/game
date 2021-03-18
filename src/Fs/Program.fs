@@ -7,7 +7,7 @@ open System.Runtime.InteropServices
 type Scene = Scene of id : int * title : string
 
 module Cpp =
-    [<DllImport("bin/libgraphics.so")>]
+    [<DllImport("libnovel_game.so")>]
     extern int run()
 
 type OSType = Windows64 | MacOS64 | Linux64 | Other
