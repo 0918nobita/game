@@ -3,16 +3,23 @@ UNAME := $(shell uname)
 CPPFLAGS := -O2 -Wall -Wextra
 ifeq ($(UNAME), Darwin)
 CPPFLAGS += -std=c++2a -stdlib=libc++
+DYLIB := libnovel_game.dylib
 else
 CPPFLAGS += -std=c++20
+DYLIB := libnovel_game.so
 endif
 
 .PHONY: build
-build: libnovel_game.so $(BINS) src/Fs/NovelGameFs.fsproj src/Fs/Program.fs
-	dotnet build src/Fs
+build: $(DYLIB) $(BINS) src/fsharp/NovelGameFs.fsproj src/fsharp/Program.fs
+	dotnet build src/fsharp
 
-libnovel_game.so: src/Cpp/main.cpp
-	g++ $(CPPFLAGS) -fPIC -shared -o libnovel_game.so src/Cpp/main.cpp \
+libnovel_game.dylib: src/cpp/main.cpp
+	g++ $(CPPFLAGS) -fPIC -shared -o libnovel_game.dylib src/cpp/main.cpp \
+		-isystem ${VULKAN_SDK}/include \
+		-lglfw -L${VULKAN_SDK}/lib -lvulkan
+
+libnovel_game.so: src/cpp/main.cpp
+	g++ $(CPPFLAGS) -fPIC -shared -o libnovel_game.so src/cpp/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
 		`pkg-config --libs glfw3` -ldl -lX11 \
 		-L${VULKAN_SDK}/lib -lvulkan
@@ -34,8 +41,8 @@ endif
 endif
 
 .PHONY: run
-run: libnovel_game.so src/Fs/NovelGameFs.fsproj src/Fs/Program.fs save_data.sqlite3
-	dotnet run -p src/Fs
+run: $(DYLIB) src/fsharp/NovelGameFs.fsproj src/fsharp/Program.fs save_data.sqlite3
+	dotnet run -p src/fsharp
 
 save_data.sqlite3: InitDB.fsx
 	dotnet fsi InitDB.fsx
@@ -55,4 +62,4 @@ format:
 
 .PHONY: clean
 clean:
-	rm -rf bin obj libnovel_game.so save_data.sqlite3
+	rm -rf bin libnovel_game.so libnovel_game.dylib save_data.sqlite3

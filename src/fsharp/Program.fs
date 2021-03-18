@@ -3,14 +3,29 @@ open System
 open System.Runtime.CompilerServices
 open System.Runtime.InteropServices
 
-[<Struct; IsReadOnly>]
-type Scene = Scene of id : int * title : string
+type OSType = Windows64 | MacOS64 | Linux64 | Other
 
-module Cpp =
+module MacOSNative =
+    [<DllImport("libnovel_game.dylib")>]
+    extern int run()
+
+module LinuxNative =
     [<DllImport("libnovel_game.so")>]
     extern int run()
 
-type OSType = Windows64 | MacOS64 | Linux64 | Other
+type VulkanApp =
+    abstract member Run: unit -> int
+
+type VulkanAppForMacOS() =
+    interface VulkanApp with
+        member this.Run() = MacOSNative.run()
+
+type VulkanAppForLinux() =
+    interface VulkanApp with
+        member this.Run() = LinuxNative.run()
+
+[<Struct; IsReadOnly>]
+type Scene = Scene of id : int * title : string
 
 [<EntryPoint>]
 let main _ =
@@ -25,9 +40,16 @@ let main _ =
         | (true, false, false, true) -> Linux64
         | _ -> Other
 
-    printfn "OSType: %A" <| getOSType ()
-
-    let task1 = async { Cpp.run() |> ignore }
+    let task1 =
+        async {
+            let app =
+                match getOSType () with
+                | Windows64 -> failwith "Not implemented"
+                | MacOS64 -> VulkanAppForMacOS() :> VulkanApp
+                | Linux64 -> VulkanAppForLinux() :> VulkanApp
+                | Other -> failwith "This platform is not supported"
+            app.Run() |> ignore
+        }
 
     let inline selectRecords (conn : SqliteConnection) =
         use cmd = conn.CreateCommand()

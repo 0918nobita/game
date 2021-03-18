@@ -10,5 +10,7 @@ packages
 !extensions.json
 !launch.json
 /x64
+/libnovel_game_swift.dylib
+/libnovel_game.dylib
 /libnovel_game.so
 /save_data.sqlite3
