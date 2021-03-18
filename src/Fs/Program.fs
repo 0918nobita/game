@@ -29,7 +29,6 @@ let main _ =
 
     let task1 = async { Cpp.run() |> ignore }
 
-
     let inline selectRecords (conn : SqliteConnection) =
         use cmd = conn.CreateCommand()
         cmd.CommandText <- "SELECT * FROM scenes"
