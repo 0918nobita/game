@@ -46,7 +46,7 @@ let main _ =
 
     let app =
         match getOSType () with
-        | Windows64 -> failwith "Not implemented"
+        | Windows64 -> VulkanAppForWindows() :> VulkanApp
         | MacOS64 -> VulkanAppForMacOS() :> VulkanApp
         | Linux64 -> VulkanAppForLinux() :> VulkanApp
         | Other -> failwith "This platform is not supported"

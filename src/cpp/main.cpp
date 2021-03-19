@@ -7,6 +7,12 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
+#ifdef _MSC_VER
+#define DLL_EXPORT __declspec(dllexport)
+#else
+#define DLL_EXPORT
+#endif
+
 void prepareGLFW();
 
 std::vector<const char *> getRequiredInstanceExtensions() noexcept;
@@ -23,7 +29,7 @@ void dumpDeviceExtensions(const vk::PhysicalDevice &physical_device);
 void mainLoop(GLFWwindow *window);
 void cleanup(GLFWwindow *window);
 
-extern "C" int run() {
+extern "C" int DLL_EXPORT run() {
     prepareGLFW();
 
     const auto instance_exts = getRequiredInstanceExtensions();

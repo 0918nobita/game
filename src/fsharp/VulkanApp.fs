@@ -2,6 +2,10 @@ module VulkanApp
 
 open System.Runtime.InteropServices
 
+module private WindowsNative =
+    [<DllImport("NovelGameCpp.dll")>]
+    extern int run()
+
 module private MacOSNative =
     [<DllImport("libnovel_game.dylib")>]
     extern int run()
@@ -12,6 +16,10 @@ module private LinuxNative =
 
 type VulkanApp =
     abstract member Run: unit -> int
+
+type VulkanAppForWindows() =
+    interface VulkanApp with
+        member this.Run() = WindowsNative.run()
 
 type VulkanAppForMacOS() =
     interface VulkanApp with
