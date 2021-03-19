@@ -1,28 +1,12 @@
+module Program
+
 open Microsoft.Data.Sqlite
 open System
 open System.Runtime.CompilerServices
-open System.Runtime.InteropServices
+
+open VulkanApp
 
 type OSType = Windows64 | MacOS64 | Linux64 | Other
-
-module MacOSNative =
-    [<DllImport("libnovel_game.dylib")>]
-    extern int run()
-
-module LinuxNative =
-    [<DllImport("libnovel_game.so")>]
-    extern int run()
-
-type VulkanApp =
-    abstract member Run: unit -> int
-
-type VulkanAppForMacOS() =
-    interface VulkanApp with
-        member this.Run() = MacOSNative.run()
-
-type VulkanAppForLinux() =
-    interface VulkanApp with
-        member this.Run() = LinuxNative.run()
 
 [<Struct; IsReadOnly>]
 type Scene = Scene of id : int * title : string

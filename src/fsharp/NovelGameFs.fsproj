@@ -8,6 +8,7 @@
     <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="5.0.4" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="VulkanApp.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 </Project>
