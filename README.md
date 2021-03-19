@@ -5,8 +5,7 @@
 ## Overview
 
 - F# (.NET 5) App
-- Dynaminc link library written in C++
-- Vulkan / GLFW
+- C++ program using Vulkan and GLFW (as DLL), which is loaded by F# App
 
 ## Documentation for contributors
 
