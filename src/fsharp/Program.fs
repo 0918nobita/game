@@ -3,8 +3,11 @@ module Program
 open Microsoft.Data.Sqlite
 open System
 open System.Runtime.CompilerServices
+open System.Runtime.InteropServices
 
-open VulkanApp
+module VulkanApp =
+    [<DllImport("NovelGameCpp")>]
+    extern int run()
 
 type OSType = Windows64 | MacOS64 | Linux64 | Other
 
@@ -44,12 +47,6 @@ let main _ =
         | (true, false, false, true) -> Linux64
         | _ -> Other
 
-    let app =
-        match getOSType () with
-        | Windows64 -> VulkanAppForWindows() :> VulkanApp
-        | MacOS64 -> VulkanAppForMacOS() :> VulkanApp
-        | Linux64 -> VulkanAppForLinux() :> VulkanApp
-        | Other -> failwith "This platform is not supported"
-
-    app.Run() |> ignore
-    0
+    match getOSType () with
+    | Windows64 | MacOS64 | Linux64 -> VulkanApp.run()
+    | Other -> failwith "This platform is not supported"

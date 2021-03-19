@@ -3,23 +3,23 @@ UNAME := $(shell uname)
 CPPFLAGS := -O2 -Wall -Wextra
 ifeq ($(UNAME), Darwin)
 CPPFLAGS += -std=c++2a -stdlib=libc++
-DYLIB := libnovel_game.dylib
+DYLIB := libNovelGameCpp.dylib
 else
 CPPFLAGS += -std=c++20
-DYLIB := libnovel_game.so
+DYLIB := libNovelGameCpp.so
 endif
 
 .PHONY: build
 build: $(DYLIB) $(BINS) src/fsharp/NovelGameFs.fsproj src/fsharp/Program.fs
 	dotnet build src/fsharp
 
-libnovel_game.dylib: src/cpp/main.cpp
-	g++ $(CPPFLAGS) -fPIC -shared -o libnovel_game.dylib src/cpp/main.cpp \
+libNovelGameCpp.dylib: src/cpp/main.cpp
+	g++ $(CPPFLAGS) -fPIC -shared -o libNovelGameCpp.dylib src/cpp/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
 		-lglfw -L${VULKAN_SDK}/lib -lvulkan
 
-libnovel_game.so: src/cpp/main.cpp
-	g++ $(CPPFLAGS) -fPIC -shared -o libnovel_game.so src/cpp/main.cpp \
+libNovelGameCpp.so: src/cpp/main.cpp
+	g++ $(CPPFLAGS) -fPIC -shared -o libNovelGameCpp.so src/cpp/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
 		`pkg-config --libs glfw3` -ldl -lX11 \
 		-L${VULKAN_SDK}/lib -lvulkan
@@ -62,4 +62,4 @@ format:
 
 .PHONY: clean
 clean:
-	rm -rf bin libnovel_game.so libnovel_game.dylib save_data.sqlite3
+	rm -rf bin libNovelGameCpp.so libNovelGameCpp.dylib save_data.sqlite3
