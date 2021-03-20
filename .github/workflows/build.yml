@@ -1,0 +1,17 @@
+name: Build
+
+on: push
+
+jobs:
+  build:
+    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    runs-on: windows-2019
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Add msbuild to PATH
+        uses: microsoft/setup-msbuild@v1
+      - name: Restore NuGet packages
+        run: dotnet restore
+      - name: Build solution
+        run: msbuild NovelGame.sln
