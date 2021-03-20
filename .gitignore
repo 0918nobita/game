@@ -2,6 +2,7 @@
 bin
 obj
 packages
+x64
 *.vcxproj.*
 
 /.idea
@@ -9,7 +10,6 @@ packages
 /.vscode/*
 !extensions.json
 !launch.json
-/x64
 /libNovelGameCpp.dylib
 /libNovelGameCpp.so
 /save_data.sqlite3
