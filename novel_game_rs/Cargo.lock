@@ -20,6 +20,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ash"
+version = "0.32.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77ea56be8250318e64923c7e65b82a35b5c29dfb6dc1c7d1c0b288c4b1bbb084"
+dependencies = [
+ "libloading 0.7.0",
+]
+
+[[package]]
 name = "bitflags"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -548,6 +557,7 @@ dependencies = [
 name = "novel_game_rs"
 version = "0.1.0"
 dependencies = [
+ "ash",
  "winit",
 ]
 
