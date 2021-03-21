@@ -3,6 +3,7 @@ bin
 obj
 packages
 x64
+*.drama
 *.vcxproj.*
 
 /.idea
