@@ -151,7 +151,7 @@ extern "C" int DLL_EXPORT run() {
     const std::vector<const char *> device_exts = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
     const auto device =
         physical_device.createDevice(vk::DeviceCreateInfo()
-                                         .setEnabledExtensionCount(device_exts.size())
+                                         .setEnabledExtensionCount(static_cast<uint32_t>(device_exts.size()))
                                          .setPpEnabledExtensionNames(device_exts.data())
                                          .setPpEnabledLayerNames(layers.data())
                                          .setQueueCreateInfoCount(1)
