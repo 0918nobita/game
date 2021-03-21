@@ -7,101 +7,15 @@
 #include <iostream>
 #include <vulkan/vulkan.hpp>
 
+#include "physical_device.hpp"
+#include "vk_instance.hpp"
+#include "window.hpp"
+
 #ifdef _MSC_VER
 #define DLL_EXPORT __declspec(dllexport)
 #else
 #define DLL_EXPORT
 #endif
-
-/** GLFW の初期設定を済ませる */
-void prepareGLFW() {
-    glfwInit();
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, 0);
-}
-
-/** GLFW が必要としているインスタンス拡張を一括取得する */
-std::vector<const char *> getRequiredInstanceExtensions() noexcept {
-    uint32_t num_required_exts;
-    auto required_exts = glfwGetRequiredInstanceExtensions(&num_required_exts);
-    std::cout << "Required extensions (" << num_required_exts << "):" << std::endl;
-    std::vector<const char *> extensions(num_required_exts);
-    for (uint32_t i = 0; i < num_required_exts; i++) {
-        std::cout << "  " << required_exts[i] << std::endl;
-        extensions[i] = required_exts[i];
-    }
-    return extensions;
-}
-
-/** Vulkan インスタンスを生成する */
-vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> createInstance(
-    const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers) {
-    const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
-    const auto instance_create_info = vk::InstanceCreateInfo()
-                                          .setPApplicationInfo(&app_info)
-                                          .setEnabledExtensionCount(instance_exts.size())
-                                          .setPpEnabledExtensionNames(instance_exts.data())
-                                          .setPpEnabledLayerNames(layers.data());
-    return vk::createInstanceUnique(instance_create_info);
-}
-
-/** 物理デバイスの種別を表した文字列を取得する */
-std::string physicalDeviceTypeToStr(vk::PhysicalDeviceType device_type) noexcept {
-    switch (device_type) {
-        case vk::PhysicalDeviceType::eCpu:
-            return "CPU";
-        case vk::PhysicalDeviceType::eDiscreteGpu:
-            return "Discrete GPU";
-        case vk::PhysicalDeviceType::eIntegratedGpu:
-            return "Integrated GPU";
-        case vk::PhysicalDeviceType::eVirtualGpu:
-            return "Virtual GPU";
-        default:
-            return "Other GPU";
-    }
-}
-
-/** 物理デバイスを一覧表示する */
-void dumpPhysicalDevices(const std::vector<vk::PhysicalDevice> &devices) noexcept {
-    std::cout << "Physical devices (" << devices.size() << "):" << std::endl;
-    for (const auto &device : devices) {
-        const auto props = device.getProperties();
-        std::cout << "  " << props.deviceName << " (" << physicalDeviceTypeToStr(props.deviceType)
-                  << ")" << std::endl;
-    }
-}
-
-/** 使用する物理デバイスとキューファミリを決定する */
-void selectPhysicalDeviceAndQueueFamily(const vk::Instance &instance,
-                                        const std::vector<vk::PhysicalDevice> &devices,
-                                        vk::PhysicalDevice *selected_device,
-                                        uint32_t *queue_family_index, uint32_t *queue_count) {
-    for (const auto &device : devices) {
-        const auto queue_family_props = device.getQueueFamilyProperties();
-        for (uint32_t i = 0; i < queue_family_props.size(); i++) {
-            const auto prop = queue_family_props[i];
-            if ((uint32_t)prop.queueFlags &&
-                glfwGetPhysicalDevicePresentationSupport(instance, device, i)) {
-                *queue_family_index = i;
-                *queue_count = prop.queueCount;
-                *selected_device = device;
-                return;
-            }
-        }
-    }
-
-    std::cerr << "No device supports image presentation to window surface" << std::endl;
-    std::exit(EXIT_FAILURE);
-}
-
-/** 物理デバイスが対応しているデバイス拡張を一覧表示する */
-void dumpDeviceExtensions(const vk::PhysicalDevice &physical_device) {
-    const auto device_extension_props = physical_device.enumerateDeviceExtensionProperties();
-    std::cout << "Provided device extensions (" << device_extension_props.size()
-              << "):" << std::endl;
-    for (const auto &prop : device_extension_props)
-        std::cout << "  " << prop.extensionName << std::endl;
-}
 
 /** ウィンドウを表示したあとの描画ループ */
 void mainLoop(GLFWwindow *window) {
@@ -149,13 +63,13 @@ extern "C" int DLL_EXPORT run() {
 
     // 論理デバイスを生成する
     const std::vector<const char *> device_exts = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-    const auto device =
-        physical_device.createDevice(vk::DeviceCreateInfo()
-                                         .setEnabledExtensionCount(static_cast<uint32_t>(device_exts.size()))
-                                         .setPpEnabledExtensionNames(device_exts.data())
-                                         .setPpEnabledLayerNames(layers.data())
-                                         .setQueueCreateInfoCount(1)
-                                         .setPQueueCreateInfos(device_queue_create_infos));
+    const auto device = physical_device.createDevice(
+        vk::DeviceCreateInfo()
+            .setEnabledExtensionCount(static_cast<uint32_t>(device_exts.size()))
+            .setPpEnabledExtensionNames(device_exts.data())
+            .setPpEnabledLayerNames(layers.data())
+            .setQueueCreateInfoCount(1)
+            .setPQueueCreateInfos(device_queue_create_infos));
 
     // コマンドプールを生成する
     // 描画命令等を保持するコマンドバッファが、コマンドプールから割り当てられる

@@ -13,13 +13,13 @@ endif
 build: $(DYLIB) $(BINS) src/fsharp/NovelGameFs.fsproj src/fsharp/Program.fs
 	dotnet build src/fsharp
 
-libNovelGameCpp.dylib: src/cpp/main.cpp
-	g++ $(CPPFLAGS) -fPIC -shared -o libNovelGameCpp.dylib src/cpp/main.cpp \
+libNovelGameCpp.dylib: src/cpp/main.cpp src/cpp/physical_device.cpp src/cpp/physical_device.hpp src/cpp/vk_instance.cpp src/cpp/vk_instance.hpp src/cpp/window.cpp src/cpp/window.hpp
+	g++ $(CPPFLAGS) -fPIC -shared -o libNovelGameCpp.dylib src/cpp/physical_device.cpp src/cpp/vk_instance.cpp src/cpp/window.cpp src/cpp/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
 		-lglfw -L${VULKAN_SDK}/lib -lvulkan
 
-libNovelGameCpp.so: src/cpp/main.cpp
-	g++ $(CPPFLAGS) -fPIC -shared -o libNovelGameCpp.so src/cpp/main.cpp \
+libNovelGameCpp.so: src/cpp/main.cpp src/cpp/physical_device.cpp src/cpp/physical_device.hpp src/cpp/vk_instance.cpp src/cpp/vk_instance.hpp src/cpp/window.cpp src/cpp/window.hpp
+	g++ $(CPPFLAGS) -fPIC -shared -o libNovelGameCpp.so src/cpp/physical_device.cpp src/cpp/vk_instance.cpp src/cpp/window.cpp src/cpp/main.cpp \
 		-isystem ${VULKAN_SDK}/include \
 		`pkg-config --libs glfw3` -ldl -lX11 \
 		-L${VULKAN_SDK}/lib -lvulkan
@@ -53,12 +53,12 @@ test: bin/test
 
 .PHONY: lint
 lint:
-	clang-format --dry-run --Werror ./src/*.cpp
+	clang-format --dry-run --Werror ./src/**/*.cpp ./src/**/*.hpp
 	cpplint --recursive --verbose 5 ./src
 
 .PHONY: format
 format:
-	clang-format --Werror -i ./src/*.cpp
+	clang-format --Werror -i ./src/**/*.cpp ./src/**/*.hpp
 
 .PHONY: clean
 clean:
