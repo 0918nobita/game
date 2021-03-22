@@ -10,7 +10,6 @@ x64
 /.vs
 /.vscode/*
 !extensions.json
-!launch.json
 /libNovelGameCpp.dylib
 /libNovelGameCpp.so
 /save_data.sqlite3

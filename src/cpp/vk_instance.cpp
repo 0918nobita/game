@@ -1,4 +1,4 @@
-// Copyright 2021 Kodai Matsumoto
+﻿// Copyright 2021 Kodai Matsumoto
 
 #include "vk_instance.hpp"
 
@@ -21,10 +21,11 @@ std::vector<const char *> getRequiredInstanceExtensions() noexcept {
 vk::UniqueHandle<vk::Instance, vk::DispatchLoaderStatic> createInstance(
     const std::vector<const char *> &instance_exts, const std::vector<const char *> &layers) {
     const auto app_info = vk::ApplicationInfo("Application", VK_MAKE_VERSION(0, 1, 0));
-    const auto instance_create_info = vk::InstanceCreateInfo()
-                                          .setPApplicationInfo(&app_info)
-                                          .setEnabledExtensionCount(instance_exts.size())
-                                          .setPpEnabledExtensionNames(instance_exts.data())
-                                          .setPpEnabledLayerNames(layers.data());
+    const auto instance_create_info =
+        vk::InstanceCreateInfo()
+            .setPApplicationInfo(&app_info)
+            .setEnabledExtensionCount(static_cast<uint32_t>(instance_exts.size()))
+            .setPpEnabledExtensionNames(instance_exts.data())
+            .setPpEnabledLayerNames(layers.data());
     return vk::createInstanceUnique(instance_create_info);
 }

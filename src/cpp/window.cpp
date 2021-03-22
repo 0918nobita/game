@@ -1,4 +1,4 @@
-// Copyright 2021 Kodai Matsumoto
+﻿// Copyright 2021 Kodai Matsumoto
 
 #include "window.hpp"
 

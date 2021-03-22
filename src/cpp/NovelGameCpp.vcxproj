@@ -12,6 +12,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="physical_device.cpp" />
+    <ClCompile Include="vk_instance.cpp" />
+    <ClCompile Include="window.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -87,6 +90,11 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="physical_device.hpp" />
+    <ClInclude Include="vk_instance.hpp" />
+    <ClInclude Include="window.hpp" />
   </ItemGroup>
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\..\packages\glfw.3.3.3\build\native\glfw.targets" Condition="Exists('..\..\packages\glfw.3.3.3\build\native\glfw.targets')" />
