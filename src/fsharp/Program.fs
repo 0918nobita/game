@@ -12,7 +12,7 @@ module VulkanApp =
 type OSType = Windows64 | MacOS64 | Linux64 | Other
 
 [<Struct; IsReadOnly>]
-type Scene = Scene of id : int * title : string
+type Row = Row of id : int * title : string
 
 [<EntryPoint>]
 let main _ =
@@ -22,7 +22,7 @@ let main _ =
         use dataReader = cmd.ExecuteReader()
         seq {
             while dataReader.Read() do
-                yield Scene(dataReader.GetInt32(0), dataReader.GetString(1))
+                yield Row(dataReader.GetInt32(0), dataReader.GetString(1))
         }
         |> List.ofSeq
 

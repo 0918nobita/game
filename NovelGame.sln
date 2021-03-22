@@ -12,8 +12,6 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "NovelGameFs", "src\fsharp\N
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "NovelGameCpp", "src\cpp\NovelGameCpp.vcxproj", "{316BF851-2D70-479C-8FFC-2DB7264BB6B0}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "DramaScript", "src\DramaScript\DramaScript.fsproj", "{8EB22255-237B-4B42-8ED3-201D205D5DCD}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,14 +34,6 @@ Global
 		{316BF851-2D70-479C-8FFC-2DB7264BB6B0}.Release|Any CPU.ActiveCfg = Release|Win32
 		{316BF851-2D70-479C-8FFC-2DB7264BB6B0}.Release|x64.ActiveCfg = Release|x64
 		{316BF851-2D70-479C-8FFC-2DB7264BB6B0}.Release|x64.Build.0 = Release|x64
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD}.Debug|x64.Build.0 = Debug|Any CPU
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD}.Release|x64.ActiveCfg = Release|Any CPU
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -51,7 +41,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{1EC5A06B-EE8A-4FEF-BF28-DAA2E99FC849} = {EA0ADC8C-0FFD-4A1B-88EF-D4BE764CEDD9}
 		{316BF851-2D70-479C-8FFC-2DB7264BB6B0} = {EA0ADC8C-0FFD-4A1B-88EF-D4BE764CEDD9}
-		{8EB22255-237B-4B42-8ED3-201D205D5DCD} = {EA0ADC8C-0FFD-4A1B-88EF-D4BE764CEDD9}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {224FAE2B-32BA-48D2-8951-A64467C1BB1F}
