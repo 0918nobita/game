@@ -2,14 +2,20 @@ open System
 
 [<RequireQualifiedAccess>]
 type JsonValue =
-    | Object of Map<string, JsonValue>
     | String of string
+    | Array of JsonValue list
+    | Object of Map<string, JsonValue>
 
 module JsonValue =
     let rec toString (jsonValue : JsonValue) : string =
         match jsonValue with
         | JsonValue.String(str) ->
             sprintf "\"%s\"" str
+        | JsonValue.Array(list) ->
+            list
+            |> List.map toString
+            |> String.concat ","
+            |> sprintf "[%s]"
         | JsonValue.Object(map) ->
             map
             |> Map.map
@@ -21,21 +27,46 @@ module JsonValue =
             |> String.concat ","
             |> sprintf "{%s}"
 
-type CharDecl = {
-    id : string
-    name : string
-}
+type IJsonSerializer =
+    abstract ToJson: unit -> JsonValue
 
-type Speak = {
-    speaker : string
-    content : string
-}
+type CharDecl =
+    { id : string
+      name : string }
+    interface IJsonSerializer with
+        member this.ToJson() =
+            Map.empty
+                .Add("id", JsonValue.String this.id)
+                .Add("name", JsonValue.String this.name)
+            |> JsonValue.Object
 
-type Scene = {
-    formatVersion : string
-    chars : CharDecl list
-    script : Speak list
-}
+type Speak =
+    { speaker : string
+      content : string }
+    interface IJsonSerializer with
+        member this.ToJson() =
+            Map.empty
+                .Add("speaker", JsonValue.String this.speaker)
+                .Add("content", JsonValue.String this.content)
+            |> JsonValue.Object
+
+type Scene =
+    { formatVersion : string
+      chars : CharDecl list
+      script : Speak list }
+    interface IJsonSerializer with
+        member this.ToJson() =
+            Map.empty
+                .Add("formatVersion", JsonValue.String this.formatVersion)
+                .Add("chars",
+                    this.chars
+                    |> List.map (fun c -> (c :> IJsonSerializer).ToJson())
+                    |> JsonValue.Array)
+                .Add("script",
+                    this.script
+                    |> List.map (fun cmd -> (cmd :> IJsonSerializer).ToJson())
+                    |> JsonValue.Array)
+            |> JsonValue.Object
 
 let () =
     let madoka = string (Guid.NewGuid())
@@ -57,10 +88,7 @@ let () =
             }
         ]
     }
-    printfn "%A" scene
-    Map.empty
-        .Add("foo", JsonValue.String "bar")
-        .Add("hoge", JsonValue.String "fuga")
-    |> JsonValue.Object
+
+    (scene :> IJsonSerializer).ToJson()
     |> JsonValue.toString
     |> printfn "%s"
