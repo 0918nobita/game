@@ -1,3 +1,5 @@
+open System
+
 [<RequireQualifiedAccess>]
 type JsonValue =
     | Object of Map<string, JsonValue>
@@ -36,23 +38,26 @@ type Scene = {
 }
 
 let () =
+    let madoka = string (Guid.NewGuid())
+    let homura = string (Guid.NewGuid())
     let scene = {
         formatVersion = "1.0"
         chars = [
-            { id = "madoka"; name = "鹿目まどか" }
-            { id = "homura"; name = "暁美ほむら" }
+            { id = madoka; name = "鹿目まどか" }
+            { id = homura; name = "暁美ほむら" }
         ]
         script = [
             {
-                speaker = "homura"
+                speaker = homura
                 content = "鹿目まどか。あなたは、この世界が尊いと思う？欲望よりも秩序を大切にしてる？"
             }
             {
-                speaker = "madoka"
+                speaker = madoka
                 content = "それは…えっと、その…私は、尊いと思うよ。やっぱり、自分勝手にルールを破るのって、悪いことじゃないかな…"
             }
         ]
     }
+    printfn "%A" scene
     Map.empty
         .Add("foo", JsonValue.String "bar")
         .Add("hoge", JsonValue.String "fuga")
