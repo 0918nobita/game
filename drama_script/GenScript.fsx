@@ -1,36 +1,37 @@
 open System
 
-(*
 [<RequireQualifiedAccess>]
 type JsonValue =
     | String of string
     | Array of JsonValue list
     | Object of Map<string, JsonValue>
 
-module JsonValue =
-    let rec toString (jsonValue : JsonValue) : string =
+    static member private ToString(jsonValue : JsonValue) =
         match jsonValue with
-        | JsonValue.String(str) ->
+        | String(str) ->
             sprintf "\"%s\"" str
-        | JsonValue.Array(list) ->
+        | Array(list) ->
             list
-            |> List.map toString
+            |> List.map JsonValue.ToString
             |> String.concat ","
             |> sprintf "[%s]"
-        | JsonValue.Object(map) ->
+        | Object(map) ->
             map
             |> Map.map
                 (fun key value ->
-                    toString value
+                    JsonValue.ToString value
                     |> sprintf "\"%s\":%s" key)
             |> Map.toList
             |> List.map snd
             |> String.concat ","
             |> sprintf "{%s}"
 
-type IJsonSerializer =
+    override this.ToString() = JsonValue.ToString(this)
+
+type IJsonSerializable =
     abstract ToJson: unit -> JsonValue
 
+(*
 type Character(name : string) =
     member val Guid = string(Guid.NewGuid())
     member val Name = name with get, set
@@ -127,26 +128,41 @@ type CharList =
 
     static member Empty = CharList Map.empty
 
-module CharList =
-    let addNewChar (name : string) (charList : CharList) : CharList =
-        match charList with
-        | CharList(map) ->
-            map
-            |> Map.add (Guid.NewGuid() |> string |> CharId) (CharName name)
-            |> CharList
+    interface IJsonSerializable with
+        member this.ToJson() =
+            match this with
+            | CharList(map) ->
+                map
+                |> Map.fold
+                    (fun acc (CharId(charId)) (CharName(name)) ->
+                        let charObj =
+                            Map.empty
+                                .Add("guid", JsonValue.String charId)
+                                .Add("name", JsonValue.String name)
+                            |> JsonValue.Object
+                        acc @ [charObj])
+                    []
+                |> JsonValue.Array
 
-    let merge (latter : CharList) (former : CharList) : CharList =
-        match (former, latter) with
-        | CharList(formerMap), CharList(latterMap) ->
-            latterMap
-            |> Map.fold
-                (fun acc charId charName -> Map.add charId charName acc)
-                formerMap
-            |> CharList
+module CharList =
+    let addNewChar (name : string) (CharList(map)) : CharList =
+        map
+        |> Map.add (Guid.NewGuid() |> string |> CharId) (CharName name)
+        |> CharList
+
+    let merge (CharList(latter)) (CharList(former)) : CharList =
+        latter
+        |> Map.fold
+            (fun acc charId charName -> Map.add charId charName acc)
+            former
+        |> CharList
 
 let () =
     let charListA = CharList.Empty |> CharList.addNewChar "鹿目まどか"
     let charListB = CharList.Empty |> CharList.addNewChar "暁美ほむら"
-    charListA
-    |> CharList.merge charListB
+    let charList =
+        charListA
+        |> CharList.merge charListB
+    (charList :> IJsonSerializable).ToJson()
+    |> string
     |> printfn "%A"
