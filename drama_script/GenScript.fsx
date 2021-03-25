@@ -31,93 +31,6 @@ type JsonValue =
 type IJsonSerializable =
     abstract ToJson: unit -> JsonValue
 
-(*
-type Character(name : string) =
-    member val Guid = string(Guid.NewGuid())
-    member val Name = name with get, set
-
-    interface IEquatable<Character> with
-        member this.Equals(other) = this.Guid = other.Guid
-
-type CharsList =
-    | CharsList of Character list
-
-    interface IJsonSerializer with
-        member this.ToJson() =
-            match this with
-            | CharsList(chars) ->
-                chars
-                |> List.map (fun c ->
-                    Map.empty
-                        .Add("id", JsonValue.String c.Guid)
-                        .Add("name", JsonValue.String c.Name)
-                    |> JsonValue.Object)
-                |> JsonValue.Array
-
-type Speak =
-    { Speaker : Character
-      Content : string }
-
-    interface IJsonSerializer with
-        member this.ToJson() =
-            Map.empty
-                .Add("speaker", JsonValue.String this.Speaker.Guid)
-                .Add("content", JsonValue.String this.Content)
-            |> JsonValue.Object
-
-type Scene =
-    { FormatVersion : string
-      Chars : CharsList
-      Script : Speak list }
-
-    interface IJsonSerializer with
-        member this.ToJson() =
-            Map.empty
-                .Add("formatVersion", JsonValue.String this.FormatVersion)
-                .Add("chars", (this.Chars :> IJsonSerializer).ToJson())
-                .Add("script",
-                    this.Script
-                    |> List.map (fun cmd -> (cmd :> IJsonSerializer).ToJson())
-                    |> JsonValue.Array)
-            |> JsonValue.Object
-
-type SceneBuilder() =
-    member _.Yield(()) = {
-        FormatVersion = "1.0"
-        Chars = CharsList []
-        Script = []
-    }
-
-    [<CustomOperation("addChar")>]
-    member _.AddChar(scene : Scene, character : Character) =
-        let chars =
-            match scene.Chars with
-            | CharsList(chars) -> chars
-        let newChars = CharsList (chars @ [ character ])
-        { scene with Chars = newChars }
-
-    [<CustomOperation("speak")>]
-    member _.Speak(scene : Scene, character : Character, content : string) =
-        { scene with Script = scene.Script @ [{ Speaker = character; Content = content }] }
-
-let () =
-    let script = SceneBuilder()
-
-    let scene =
-        let homura = Character("暁美ほむら")
-        let madoka = Character("鹿目まどか")
-        script {
-            addChar homura
-            addChar madoka
-            speak homura "鹿目まどか。あなたは、この世界が尊いと思う？欲望よりも秩序を大切にしてる？"
-            speak madoka "それは…えっと、その…私は、尊いと思うよ。やっぱり、自分勝手にルールを破るのって、悪いことじゃないかな…"
-        }
-
-    (scene :> IJsonSerializer).ToJson()
-    |> JsonValue.toString
-    |> printfn "%s"
-*)
-
 type CharId = CharId of string
 
 type CharName = CharName of string
@@ -145,24 +58,64 @@ type CharList =
                 |> JsonValue.Array
 
 module CharList =
-    let addNewChar (name : string) (CharList(map)) : CharList =
-        map
-        |> Map.add (Guid.NewGuid() |> string |> CharId) (CharName name)
-        |> CharList
+    let inline addNewChar (name : string) (CharList(map)) : CharList * CharId =
+        let charId = Guid.NewGuid() |> string |> CharId 
+        let charList = map |> Map.add charId (CharName name) |> CharList
+        (charList, charId)
 
-    let merge (CharList(latter)) (CharList(former)) : CharList =
+    let inline merge (CharList(latter)) (CharList(former)) : CharList =
         latter
         |> Map.fold
             (fun acc charId charName -> Map.add charId charName acc)
             former
         |> CharList
 
+type Command =
+    | Speak of speaker : CharId * message : string
+
+type Script =
+    private
+    | Script of Command list
+
+    static member Empty = Script []
+
+    interface IJsonSerializable with
+        member this.ToJson() =
+            match this with
+            | Script(cmds) ->
+                cmds
+                |> List.map
+                    (fun (Speak(CharId(charId), message)) ->
+                        Map.empty
+                            .Add("speaker", JsonValue.String charId)
+                            .Add("message", JsonValue.String message)
+                        |> JsonValue.Object)
+                |> JsonValue.Array
+
+module Script =
+    let inline speak (charId : CharId) (message : string) (Script(cmds)) =
+        Script(cmds @ [Speak(charId, message)])
+
+    let inline append (Script(latter)) (Script(former)) =
+        Script(former @ latter)
+
 let () =
-    let charListA = CharList.Empty |> CharList.addNewChar "鹿目まどか"
-    let charListB = CharList.Empty |> CharList.addNewChar "暁美ほむら"
+    let (charListA, madoka) = CharList.Empty |> CharList.addNewChar "鹿目まどか"
+    let (charListB, homura) = CharList.Empty |> CharList.addNewChar "暁美ほむら"
+
     let charList =
         charListA
         |> CharList.merge charListB
+
     (charList :> IJsonSerializable).ToJson()
     |> string
-    |> printfn "%A"
+    |> printfn "charList: %s"
+
+    let script =
+        Script.Empty
+        |> Script.speak homura "鹿目まどか。あなたは、この世界が尊いと思う？欲望よりも秩序を大切にしてる？"
+        |> Script.speak madoka "それは…えっと、その…私は、尊いと思うよ。やっぱり、自分勝手にルールを破るのって、悪いことじゃないかな…"
+
+    (script :> IJsonSerializable).ToJson()
+    |> string
+    |> printfn "script: %s"
