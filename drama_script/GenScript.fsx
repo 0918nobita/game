@@ -53,50 +53,63 @@ type CharsDecl =
                 |> JsonValue.Array
 
 type Speak =
-    { speaker : Character
-      content : string }
+    { Speaker : Character
+      Content : string }
 
     interface IJsonSerializer with
         member this.ToJson() =
             Map.empty
-                .Add("speaker", JsonValue.String this.speaker.Guid)
-                .Add("content", JsonValue.String this.content)
+                .Add("speaker", JsonValue.String this.Speaker.Guid)
+                .Add("content", JsonValue.String this.Content)
             |> JsonValue.Object
 
 type Scene =
-    { formatVersion : string
-      chars : CharsDecl
-      script : Speak list }
+    { FormatVersion : string
+      Chars : CharsDecl
+      Script : Speak list }
 
     interface IJsonSerializer with
         member this.ToJson() =
             Map.empty
-                .Add("formatVersion", JsonValue.String this.formatVersion)
-                .Add("chars", (this.chars :> IJsonSerializer).ToJson())
+                .Add("formatVersion", JsonValue.String this.FormatVersion)
+                .Add("chars", (this.Chars :> IJsonSerializer).ToJson())
                 .Add("script",
-                    this.script
+                    this.Script
                     |> List.map (fun cmd -> (cmd :> IJsonSerializer).ToJson())
                     |> JsonValue.Array)
             |> JsonValue.Object
 
-let () =
-    let madoka = Character("鹿目まどか")
-    let homura = Character("暁美ほむら")
-
-    let scene = {
-        formatVersion = "1.0"
-        chars = CharsDecl [madoka; homura]
-        script = [
-            {
-                speaker = homura
-                content = "鹿目まどか。あなたは、この世界が尊いと思う？欲望よりも秩序を大切にしてる？"
-            }
-            {
-                speaker = madoka
-                content = "それは…えっと、その…私は、尊いと思うよ。やっぱり、自分勝手にルールを破るのって、悪いことじゃないかな…"
-            }
-        ]
+type SceneBuilder() =
+    member _.Yield(()) = {
+        FormatVersion = "1.0"
+        Chars = CharsDecl []
+        Script = []
     }
+
+    [<CustomOperation("addChar")>]
+    member _.AddChar(scene : Scene, character : Character) =
+        let chars =
+            match scene.Chars with
+            | CharsDecl(chars) -> chars
+        let newChars = CharsDecl (chars @ [ character ])
+        { scene with Chars = newChars }
+
+    [<CustomOperation("speak")>]
+    member _.Speak(scene : Scene, character : Character, content : string) =
+        { scene with Script = scene.Script @ [{ Speaker = character; Content = content }] }
+
+let () =
+    let script = SceneBuilder()
+
+    let scene =
+        let homura = Character("暁美ほむら")
+        let madoka = Character("鹿目まどか")
+        script {
+            addChar homura
+            addChar madoka
+            speak homura "鹿目まどか。あなたは、この世界が尊いと思う？欲望よりも秩序を大切にしてる？"
+            speak madoka "それは…えっと、その…私は、尊いと思うよ。やっぱり、自分勝手にルールを破るのって、悪いことじゃないかな…"
+        }
 
     (scene :> IJsonSerializer).ToJson()
     |> JsonValue.toString
