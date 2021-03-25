@@ -1,5 +1,6 @@
 open System
 
+(*
 [<RequireQualifiedAccess>]
 type JsonValue =
     | String of string
@@ -37,13 +38,13 @@ type Character(name : string) =
     interface IEquatable<Character> with
         member this.Equals(other) = this.Guid = other.Guid
 
-type CharsDecl =
-    | CharsDecl of Character list
+type CharsList =
+    | CharsList of Character list
 
     interface IJsonSerializer with
         member this.ToJson() =
             match this with
-            | CharsDecl(chars) ->
+            | CharsList(chars) ->
                 chars
                 |> List.map (fun c ->
                     Map.empty
@@ -65,7 +66,7 @@ type Speak =
 
 type Scene =
     { FormatVersion : string
-      Chars : CharsDecl
+      Chars : CharsList
       Script : Speak list }
 
     interface IJsonSerializer with
@@ -82,7 +83,7 @@ type Scene =
 type SceneBuilder() =
     member _.Yield(()) = {
         FormatVersion = "1.0"
-        Chars = CharsDecl []
+        Chars = CharsList []
         Script = []
     }
 
@@ -90,8 +91,8 @@ type SceneBuilder() =
     member _.AddChar(scene : Scene, character : Character) =
         let chars =
             match scene.Chars with
-            | CharsDecl(chars) -> chars
-        let newChars = CharsDecl (chars @ [ character ])
+            | CharsList(chars) -> chars
+        let newChars = CharsList (chars @ [ character ])
         { scene with Chars = newChars }
 
     [<CustomOperation("speak")>]
@@ -114,3 +115,38 @@ let () =
     (scene :> IJsonSerializer).ToJson()
     |> JsonValue.toString
     |> printfn "%s"
+*)
+
+type CharId = CharId of string
+
+type CharName = CharName of string
+
+type CharList =
+    private
+    | CharList of Map<CharId, CharName>
+
+    static member Empty = CharList Map.empty
+
+module CharList =
+    let addNewChar (name : string) (charList : CharList) : CharList =
+        match charList with
+        | CharList(map) ->
+            map
+            |> Map.add (Guid.NewGuid() |> string |> CharId) (CharName name)
+            |> CharList
+
+    let merge (latter : CharList) (former : CharList) : CharList =
+        match (former, latter) with
+        | CharList(formerMap), CharList(latterMap) ->
+            latterMap
+            |> Map.fold
+                (fun acc charId charName -> Map.add charId charName acc)
+                formerMap
+            |> CharList
+
+let () =
+    let charListA = CharList.Empty |> CharList.addNewChar "鹿目まどか"
+    let charListB = CharList.Empty |> CharList.addNewChar "暁美ほむら"
+    charListA
+    |> CharList.merge charListB
+    |> printfn "%A"
