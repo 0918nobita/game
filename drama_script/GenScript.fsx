@@ -31,6 +31,10 @@ type JsonValue =
 type IJsonSerializable =
     abstract ToJson: unit -> JsonValue
 
+module JsonValue =
+    let inline from< ^a when ^a :> IJsonSerializable > (a : ^a) : JsonValue =
+        (a :> IJsonSerializable).ToJson()
+
 type CharId = CharId of string
 
 type CharName = CharName of string
@@ -40,6 +44,13 @@ type CharList =
     | CharList of Map<CharId, CharName>
 
     static member Empty = CharList Map.empty
+
+    member inline this.AddNewChar(name : string) : CharList * CharId =
+        match this with
+        | CharList(map) ->
+            let charId = Guid.NewGuid() |> string |> CharId 
+            let charList = map |> Map.add charId (CharName name) |> CharList
+            (charList, charId)
 
     interface IJsonSerializable with
         member this.ToJson() =
@@ -58,10 +69,8 @@ type CharList =
                 |> JsonValue.Array
 
 module CharList =
-    let inline addNewChar (name : string) (CharList(map)) : CharList * CharId =
-        let charId = Guid.NewGuid() |> string |> CharId 
-        let charList = map |> Map.add charId (CharName name) |> CharList
-        (charList, charId)
+    let inline addNewChar (name : string) (charList : CharList) : CharList * CharId =
+        charList.AddNewChar(name)
 
     let inline merge (CharList(latter)) (CharList(former)) : CharList =
         latter
@@ -79,6 +88,10 @@ type Script =
 
     static member Empty = Script []
 
+    member inline this.Speak(charId : CharId, message : string) : Script =
+         match this with
+         | Script(cmds) -> Script(cmds @ [Speak(charId, message)])
+
     interface IJsonSerializable with
         member this.ToJson() =
             match this with
@@ -93,29 +106,27 @@ type Script =
                 |> JsonValue.Array
 
 module Script =
-    let inline speak (charId : CharId) (message : string) (Script(cmds)) =
-        Script(cmds @ [Speak(charId, message)])
+    let inline speak (charId : CharId) (message : string) (script : Script) : Script =
+        script.Speak(charId, message)
 
     let inline append (Script(latter)) (Script(former)) =
         Script(former @ latter)
 
 let () =
-    let (charListA, madoka) = CharList.Empty |> CharList.addNewChar "鹿目まどか"
-    let (charListB, homura) = CharList.Empty |> CharList.addNewChar "暁美ほむら"
+    let (charListA, madoka) = CharList.Empty.AddNewChar("鹿目まどか")
+    let (charListB, homura) = charListA.AddNewChar("暁美ほむら")
 
-    let charList =
-        charListA
-        |> CharList.merge charListB
-
-    (charList :> IJsonSerializable).ToJson()
+    charListB
+    |> JsonValue.from
     |> string
     |> printfn "charList: %s"
 
     let script =
         Script.Empty
-        |> Script.speak homura "鹿目まどか。あなたは、この世界が尊いと思う？欲望よりも秩序を大切にしてる？"
-        |> Script.speak madoka "それは…えっと、その…私は、尊いと思うよ。やっぱり、自分勝手にルールを破るのって、悪いことじゃないかな…"
+            .Speak(homura, "鹿目まどか。あなたは、この世界が尊いと思う？欲望よりも秩序を大切にしてる？")
+            .Speak(madoka, "それは…えっと、その…私は、尊いと思うよ。やっぱり、自分勝手にルールを破るのって、悪いことじゃないかな…")
 
-    (script :> IJsonSerializable).ToJson()
+    script
+    |> JsonValue.from
     |> string
     |> printfn "script: %s"
