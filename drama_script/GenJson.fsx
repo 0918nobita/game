@@ -65,25 +65,25 @@ type CharList =
 
     member inline this.AddChar(name : string) : CharId * CharList =
         match this with
-        | CharList(map) ->
+        | CharList(charList) ->
             let charId = Guid.NewGuid() |> string |> CharId 
-            let charList = map |> Map.add charId (CharName name) |> CharList
+            let charList = charList |> Map.add charId (CharName name) |> CharList
             (charId, charList)
 
     interface IJsonSerializable with
         member this.ToJson() =
             match this with
-            | CharList(map) ->
-                map
-                |> Map.fold
-                    (fun acc (CharId(charId)) (CharName(name)) ->
-                        let charObj =
-                            Map.empty
-                                .Add("guid", JsonValue.String charId)
-                                .Add("name", JsonValue.String name)
-                            |> JsonValue.Object
-                        acc @ [charObj])
-                    []
+            | CharList(charList) ->
+                let folder (jsonValues : JsonValue list) (CharId(charId)) (CharName(charName)) : JsonValue list =
+                    let charObj =
+                        [ "guid", JsonValue.String charId
+                          "name", JsonValue.String charName ]
+                        |> Map.ofList
+                        |> JsonValue.Object
+                    jsonValues @ [charObj]
+
+                charList
+                |> Map.fold folder []
                 |> JsonValue.Array
 
 type Command =
@@ -97,19 +97,20 @@ type Script =
 
     member inline this.Speak(charId : CharId, message : string) : Script =
          match this with
-         | Script(cmds) -> Script(cmds @ [Speak(charId, message)])
+         | Script(commands) -> Script(commands @ [Speak(charId, message)])
 
     interface IJsonSerializable with
         member this.ToJson() =
             match this with
-            | Script(cmds) ->
-                cmds
-                |> List.map
-                    (fun (Speak(CharId(charId), message)) ->
-                        Map.empty
-                            .Add("speaker", JsonValue.String charId)
-                            .Add("message", JsonValue.String message)
-                        |> JsonValue.Object)
+            | Script(commands) ->
+                let mapping (Speak(CharId(charId), message)) : JsonValue =
+                    [ "speaker", JsonValue.String charId
+                      "message", JsonValue.String message ]
+                    |> Map.ofList
+                    |> JsonValue.Object
+
+                commands
+                |> List.map mapping
                 |> JsonValue.Array
 
 type ScriptBuilder() =
@@ -125,9 +126,9 @@ type Scene =
 
     interface IJsonSerializable with
         member this.ToJson() =
-            Map.empty
-                .Add("charList", JsonValue.from this.charList)
-                .Add("script", JsonValue.from this.script)
+            [ "charList", JsonValue.from this.charList
+              "script", JsonValue.from this.script ]
+            |> Map.ofList
             |> JsonValue.Object
 
 let () =
