@@ -1,0 +1,18 @@
+{
+  "name": "@dramascript/compiler",
+  "version": "0.1.0",
+  "description": "DramaScript compiler written in ReScript",
+  "keywords": [
+    "ReScript"
+  ],
+  "scripts": {
+    "build": "bsb -make-world",
+    "clean": "bsb -clean-world",
+    "start": "bsb -make-world -w"
+  },
+  "author": "0918nobita",
+  "license": "MIT",
+  "devDependencies": {
+    "bs-platform": "^9.0.2"
+  }
+}
