@@ -12,6 +12,10 @@
   },
   "author": "0918nobita",
   "license": "MIT",
+  "dependencies": {
+    "textlint": "^11.9.0",
+    "textlint-rule-no-hankaku-kana": "^1.0.2"
+  },
   "devDependencies": {
     "bs-platform": "^9.0.2"
   }
