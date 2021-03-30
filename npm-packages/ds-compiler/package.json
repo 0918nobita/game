@@ -17,6 +17,7 @@
     "textlint-rule-no-hankaku-kana": "^1.0.2"
   },
   "devDependencies": {
+    "bs-let": "^0.1.16",
     "bs-platform": "^9.0.2"
   }
 }

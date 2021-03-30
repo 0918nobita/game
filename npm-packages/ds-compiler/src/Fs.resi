@@ -1,1 +1,1 @@
-let readFile: (~encoding: string, ~filename: string) => Js.Promise.t<option<string>>
+let readFile: string => Js.Promise.t<option<string>>

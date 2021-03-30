@@ -2,7 +2,7 @@
 @bs.scope("promises")
 external unsafeReadFile: string => string => Js.Promise.t<string> = "readFile"
 
-let readFile = (~encoding, ~filename) =>
-    unsafeReadFile(filename, encoding)
-    |> Js.Promise.then_(content => content->Some->Js.Promise.resolve)
-    |> Js.Promise.catch(_ => Js.Promise.resolve(None))
+let readFile = (filename) =>
+    unsafeReadFile(filename, "utf-8")
+        ->Promise.then_(content => Promise.resolve(Some(content)))
+        ->Promise.catch(_ => Promise.resolve(None))
