@@ -7,7 +7,7 @@ indent_style = space
 insert_final_newline = true
 end_of_line = lf
 
-[*.{json,sbt,scala,yml}]
+[*.{json,yml}]
 indent_size = 2
 
 [Makefile]
