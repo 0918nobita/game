@@ -10,7 +10,7 @@
     "registry": "https://npm.pkg.github.com"
   },
   "bin": {
-    "ds-compiler": "./bin/ds-compiler.js"
+    "dsc": "./bin/dsc.js"
   },
   "scripts": {
     "prepublishOnly": "tsc",
