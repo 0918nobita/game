@@ -35,7 +35,10 @@ addCont(1, 2)
 ->Cont.bind(x =>
     (Cont.callCC (k =>
         k(10)
-        ->Cont.bind(_ => addCont(3, 4))))
+        ->Cont.bind(_ => {
+            Js.log("evaluated")  // no longer called!
+            addCont(3, 4)
+        })))
     ->Cont.bind(y => addCont(x, y)))
 ->Cont.run(id)
 ->Js.log  // not 10, but 13
