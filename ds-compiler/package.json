@@ -1,9 +1,14 @@
 {
-  "name": "@dramascript/compiler",
-  "version": "0.1.0",
+  "private": true,
+  "name": "@0918nobita/ds-compiler",
+  "version": "0.1.1",
   "description": "DramaScript Compiler",
   "author": "0918nobita <nobita.0918@gmail.com>",
   "license": "MIT",
+  "repository": "https://github.com/0918nobita/novel-game",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "bin": {
     "ds-compiler": "./bin/ds-compiler.js"
   },

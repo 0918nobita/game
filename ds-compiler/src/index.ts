@@ -3,6 +3,9 @@ import * as TE from 'fp-ts/lib/TaskEither';
 import { pipe } from 'fp-ts/lib/pipeable';
 import { TextLintEngine } from 'textlint';
 
+const { version } = require('../package.json');
+console.log(`DramaScript Compiler v${version}`);
+
 pipe(
     TE.tryCatch(
         () => new TextLintEngine({ rules: ['no-hankaku-kana'] }).executeOnText('半角ｶﾀｶﾅ'),
