@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@0918nobita/ds-compiler",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "DramaScript Compiler",
   "author": "0918nobita <nobita.0918@gmail.com>",
   "license": "MIT",
