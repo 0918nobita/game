@@ -13,14 +13,13 @@
     "dsc": "./bin/dsc.js"
   },
   "scripts": {
-    "prepublishOnly": "tsc",
-    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "build": "npx esbuild --platform=node --bundle --minify --sourcemap --outfile=dist/bundle.js --external:textlint ./src/index.ts",
     "test": "jest",
     "lint": "eslint . --ext .ts,.js",
     "format": "eslint . --fix --ext .ts,.js"
   },
   "dependencies": {
-    "fp-ts": "2.9.5",
     "textlint": "11.9.0",
     "textlint-rule-max-ten": "2.0.4",
     "textlint-rule-no-doubled-conjunction": "1.0.3",
@@ -32,10 +31,12 @@
     "@types/node": "14.14.37",
     "@typescript-eslint/eslint-plugin": "4.20.0",
     "@typescript-eslint/parser": "4.20.0",
+    "esbuild": "0.11.2",
     "eslint": "7.23.0",
     "eslint-config-prettier": "8.1.0",
     "eslint-plugin-prettier": "3.3.1",
     "eslint-plugin-simple-import-sort": "7.0.0",
+    "fp-ts": "2.9.5",
     "jest": "26.6.3",
     "prettier": "2.2.1",
     "ts-jest": "26.5.4",

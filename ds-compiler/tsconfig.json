@@ -14,12 +14,12 @@
     // "declarationMap": true,                      /* 対応する各 '.d.ts' ファイルにソースマップを生成します。 */
     // "sourceMap": true,                           /* 対応する '.map' ファイルを生成します。 */
     // "outFile": "./",                             /* 出力を連結して 1 つのファイルを生成します。 */
-    "outDir": "./dist",                             /* ディレクトリへ出力構造をリダイレクトします。 */
-    "rootDir": "./src",                             /* 入力ファイルのルート ディレクトリを指定します。--outDir とともに、出力ディレクトリ構造の制御に使用します。 */
+    // "outDir": "./",                              /* ディレクトリへ出力構造をリダイレクトします。 */
+    // "rootDir": "./",                             /* 入力ファイルのルート ディレクトリを指定します。--outDir とともに、出力ディレクトリ構造の制御に使用します。 */
     // "composite": true,                           /* プロジェクトのコンパイルを有効にします */
     // "tsBuildInfoFile": "./",                     /* 増分コンパイル情報を格納するファイルを指定する */
     // "removeComments": true,                      /* コメントを出力しないでください。 */
-    // "noEmit": true,                              /* 出力しないでください。 */
+    "noEmit": true,                                 /* 出力しないでください。 */
     // "importHelpers": true,                       /* 生成ヘルパーを 'tslib' からインポートします。 */
     // "downlevelIteration": true,                  /* 'for-of' の iterable、spread、'ES5' や 'ES3' をターゲットとする場合は destructuring に対してフル サポートを提供します。 */
     // "isolatedModules": true,                     /* 個々のモジュールとして各ファイルをトランスパイルします ('ts.transpileModule' に類似)。 */
