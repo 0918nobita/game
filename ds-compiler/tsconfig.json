@@ -4,7 +4,7 @@
 
     /* 基本オプション */
     // "incremental": true,                         /* インクリメンタル コンパイルを有効にする */
-    "target": "esnext",                                /* ECMAScript のターゲット バージョンを指定します: 'ES3' (既定値)、'ES5'、'ES2015'、'ES2016'、'ES2017'、'ES2018'、'ES2019'、'ES2020'、'ESNEXT'。 */
+    "target": "es2019",                                /* ECMAScript のターゲット バージョンを指定します: 'ES3' (既定値)、'ES5'、'ES2015'、'ES2016'、'ES2017'、'ES2018'、'ES2019'、'ES2020'、'ESNEXT'。 */
     "module": "commonjs",                           /* モジュール コードの生成を指定します: 'none'、'commonjs'、'amd'、'system'、'umd'、'es2015'、'es2020、'ESNext'。 */
     // "lib": [],                                   /* コンパイルに含めるライブラリ ファイルを指定します。 */
     // "allowJs": true,                             /* javascript ファイルのコンパイルを許可します。 */
