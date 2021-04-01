@@ -68,5 +68,12 @@
     /* 試験的なオプション */
     // "experimentalDecorators": true,              /* ES7 デコレーター用の実験的なサポートを有効にします。 */
     // "emitDecoratorMetadata": true,               /* デコレーター用の型メタデータを発行するための実験的なサポートを有効にします。 */
-  }
+  },
+  "files": [
+    "src/index.d.ts"
+  ],
+  "include": [
+    "src",
+    "scripts"
+  ]
 }

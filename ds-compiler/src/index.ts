@@ -1,8 +1,12 @@
 import { TextlintMessage } from '@textlint/types';
 import * as A from 'fp-ts/lib/Array';
-import { flow, pipe } from 'fp-ts/lib/function';
+import { pipe } from 'fp-ts/lib/function';
 import * as TE from 'fp-ts/lib/TaskEither';
-import { TextLintEngine } from 'textlint';
+import { TextLintCore } from 'textlint';
+import maxTen from 'textlint-rule-max-ten';
+import noDoubledConjunction from 'textlint-rule-no-doubled-conjunction';
+import noDoubledConjunctiveParticleGa from 'textlint-rule-no-doubled-conjunctive-particle-ga';
+import noHankakuKana from 'textlint-rule-no-hankaku-kana';
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { version } = require('../package.json') as { version: string };
@@ -15,23 +19,12 @@ const runLintTask = (task: LintTask) => task();
 const lintText = (text: string): LintTask =>
     pipe(
         TE.tryCatch(() => {
-            const rules = [
-                'max-ten',
-                'no-doubled-conjunction',
-                'no-doubled-conjunctive-particle-ga',
-                'no-hankaku-kana',
-            ] as const;
-
-            const engine = new TextLintEngine({ rules });
-
-            return engine.executeOnText(text);
+            const rules = [maxTen, noDoubledConjunction, noDoubledConjunctiveParticleGa, noHankakuKana];
+            const core = new TextLintCore();
+            core.setupRules(rules);
+            return core.lintText(text);
         }, String),
-        TE.map(
-            flow(
-                A.map((result) => result.messages),
-                A.flatten
-            )
-        )
+        TE.map((result) => result.messages)
     );
 
 const showLintMessages: (task: LintTask) => LintTask = TE.map(
