@@ -11,12 +11,15 @@ async function main(): Promise<void> {
             external: [
                 'textlint',
                 'textlint-rule-max-ten',
+                'textlint-rule-no-double-negative-ja',
                 'textlint-rule-no-doubled-conjunction',
                 'textlint-rule-no-doubled-conjunctive-particle-ga',
-                'textlint-rule-no-hankaku-kana',
+                'textlint-rule-no-doubled-joshi',
+                'textlint-rule-no-dropping-the-ra',
+                'textlint-rule-no-mix-dearu-desumasu',
+                'textlint-rule-sentence-length',
             ],
             minify: true,
-            sourcemap: true,
         });
     } catch (e) {
         console.error('Failed to build while executing esbuild');
