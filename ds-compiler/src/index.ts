@@ -24,7 +24,7 @@ const lintText = (text: string): LintTask =>
 
                 const engine = new TextLintEngine({ rules });
 
-                return engine.executeOnText(text)
+                return engine.executeOnText(text);
             },
             String
         ),
