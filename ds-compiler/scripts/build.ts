@@ -1,5 +1,12 @@
-import { build } from 'esbuild';
+import { build, Plugin } from 'esbuild';
 import path from 'path';
+
+const importPathPlugin: Plugin = {
+    name: 'import-path',
+    setup(build) {
+        build.onResolve({ filter: /^\.\.\/package\.json$/ }, (args) => ({ path: args.path, external: true }));
+    },
+};
 
 async function main(): Promise<void> {
     try {
@@ -7,6 +14,7 @@ async function main(): Promise<void> {
             platform: 'node',
             entryPoints: [path.join(__dirname, '../src/index.ts')],
             outfile: path.join(__dirname, '../dist/bundle.js'),
+            plugins: [importPathPlugin],
             bundle: true,
             external: [
                 'textlint',
