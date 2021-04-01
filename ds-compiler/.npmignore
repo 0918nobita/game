@@ -1,5 +1,7 @@
-/tsconfig.json
 /src/
-.eslintrc.js
-.prettierrc.js
-jest.config.js
+/scripts/
+
+/.eslintrc.js
+/.prettierrc.js
+/jest.config.js
+/tsconfig.json
