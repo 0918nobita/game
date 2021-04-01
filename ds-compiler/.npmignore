@@ -1,2 +1,3 @@
 /tsconfig.json
 /src/
+jest.config.js
