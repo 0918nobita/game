@@ -1,6 +1,6 @@
 import * as A from 'fp-ts/lib/Array';
 import * as TE from 'fp-ts/lib/TaskEither';
-import { pipe } from 'fp-ts/lib/pipeable';
+import { flow, pipe } from 'fp-ts/lib/function';
 import { TextLintEngine } from 'textlint';
 import { TextlintMessage } from '@textlint/types';
 
@@ -21,31 +21,26 @@ const lintText = (text: string): LintTask =>
                     'no-doubled-conjunctive-particle-ga',
                     'no-hankaku-kana',
                 ] as const;
+
                 const engine = new TextLintEngine({ rules });
+
                 return engine.executeOnText(text)
             },
             String
         ),
-        TE.map(results =>
-            pipe(
-                results,
+        TE.map(
+            flow(
                 A.map(result => result.messages),
                 A.flatten
             )
         )
     );
 
-const showLintMessages = (task: LintTask): LintTask =>
-    pipe(
-        task,
-        TE.map(messages => {
-            pipe(
-                messages,
-                A.map(msg =>
-                    console.log(`(Ln ${msg.line}, Col ${msg.column}) ${msg.message}`)
-                )
-            );
-            return messages;
+const showLintMessages: (task: LintTask) => LintTask =
+    TE.map(
+        A.map(msg => {
+            console.log(`(Ln ${msg.line}, Col ${msg.column}) ${msg.message}`)
+            return msg;
         })
     );
 
