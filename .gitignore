@@ -1,14 +1,2 @@
 .ionide
-obj
-packages
-x64
 *.drama
-*.vcxproj.*
-
-/.idea
-/.vs
-/.vscode/*
-!extensions.json
-/libNovelGameCpp.dylib
-/libNovelGameCpp.so
-/save_data.sqlite3
