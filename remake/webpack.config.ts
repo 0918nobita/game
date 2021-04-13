@@ -6,7 +6,7 @@ const distDir = path.join(__dirname, './dist');
 
 const config: webpack.Configuration = {
     mode: 'development',
-    entry: './src/NovelGame.fsproj',
+    entry: './src-frontend/NovelGame.fsproj',
     output: {
         path: distDir,
         filename: 'bundle.js',
