@@ -1,0 +1,18 @@
+cppflags = -std=c++2a -Wall -Wextra -pthread -fmodules-ts
+
+rule mod
+    command = clang++ $cppflags --precompile $in -o $out
+
+rule obj
+    command = clang++ $cppflags -c $in -o $out
+
+rule exe
+    command = clang++ $cppflags -fprebuilt-module-path=./build -o $out $in `pkg-config --libs glfw3,x11` -ldl
+
+build build/mymodule.pcm: mod src/mymodule.cppm
+
+build build/mymodule.o: obj build/mymodule.pcm
+
+build build/game: exe build/mymodule.o src/window.cpp src/main.cpp
+
+default build/game
