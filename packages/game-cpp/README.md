@@ -6,6 +6,12 @@
 ninja -v
 ```
 
+## Run
+
+```bash
+./build/game
+```
+
 ## Clean
 
 ```bash
