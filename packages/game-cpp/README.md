@@ -1,6 +1,13 @@
 # C++ (vulkan.hpp) で実装するノベルゲーム
 
+## Build
+
 ```bash
-meson build
-ninja -v -C ./build
+ninja -v
+```
+
+## Clean
+
+```bash
+ninja -t clean
 ```
