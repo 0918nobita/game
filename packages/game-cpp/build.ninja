@@ -1,11 +1,17 @@
 cppflags = -std=c++2a -Wall -Wextra -pthread
 cpplibs =
 
-rule cc
+rule obj
     depfile = $out.d
-    command = clang++ $cppflags $in -MD -MF $out.d -o $out $cpplibs
+    command = clang++ $cppflags -c $in -MD -MF $out.d -o $out
 
-build build/game: cc src/window.cpp src/main.cpp
+rule exe
+    command = clang++ $cppflags $in -o $out $cpplibs
+
+build build/window.o: obj src/window.cpp
+build build/main.o: obj src/main.cpp
+
+build build/game: exe build/window.o build/main.o
     cpplibs = `pkg-config --libs glfw3,x11` -ldl
 
 default build/game
