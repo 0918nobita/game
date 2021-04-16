@@ -14,4 +14,6 @@ build build/main.o: obj src/main.cpp
 build build/game: exe build/window.o build/main.o
     cpplibs = `pkg-config --libs glfw3,x11` -ldl
 
+build build/output_vec: exe src/output_vec.cpp
+
 default build/game
