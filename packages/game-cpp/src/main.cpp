@@ -6,6 +6,6 @@
 
 int main() {
     Window window(600, 500, "Game");
-    window.eventLoop([](UNUSED std::shared_ptr<GLFWwindow *> window) {});
+    window.eventLoop([](UNUSED GLFWwindowPtr window) {});
     return EXIT_SUCCESS;
 }

@@ -15,7 +15,7 @@ GLFWwindow *Window::initWindow(int width, int height, const char *title) {
 Window::Window(int width, int height, const char *title) :
     window(std::make_shared<GLFWwindow *>(initWindow(width, height, title))) {}
 
-void Window::eventLoop(std::function<void (std::shared_ptr<GLFWwindow *>)> callback) {
+void Window::eventLoop(std::function<void (GLFWwindowPtr)> callback) {
     while (!glfwWindowShouldClose(*window)) {
         glfwPollEvents();
         callback(window);
