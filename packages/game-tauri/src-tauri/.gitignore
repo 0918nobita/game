@@ -1,7 +1,0 @@
-WixTools
-
-# rustfmt
-**/*.rs.bk
-
-config.json
-bundle.json

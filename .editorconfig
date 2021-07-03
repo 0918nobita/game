@@ -7,15 +7,8 @@ indent_style = space
 insert_final_newline = true
 end_of_line = lf
 
-[*.{json,yml}]
-indent_size = 2
-
-[Makefile]
-indent_style = tab
-
-[*.{config,fsproj,vcxproj}]
-indent_size = 2
-end_of_line = crlf
-
 [*.{cpp,hpp}]
 charset = utf-8-bom
+
+[*.{json,vcxproj,yaml}]
+indent_size = 2

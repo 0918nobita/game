@@ -1,5 +1,9 @@
-[workspace]
-members = [
-    "packages/game-rs",
-    "packages/game-tauri/src-tauri",
-]
+[package]
+name = "game"
+version = "0.1.0"
+authors = ["0918nobita"]
+edition = "2018"
+
+[dependencies]
+ash = "0.32"
+winit = "0.25"
