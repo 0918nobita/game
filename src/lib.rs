@@ -74,18 +74,18 @@ fn get_window_surface() -> &'static CStr {
 }
 
 fn check_validation_layer_support(entry: &Entry) {
-    for layer_name in (*VALIDATION_LAYERS).iter() {
-        let found = entry
-            .enumerate_instance_layer_properties()
-            .unwrap()
-            .iter()
-            .any(|layer| {
-                let name = unsafe { CStr::from_ptr(layer.layer_name.as_ptr()) };
-                let name = name.to_str().unwrap();
-                name == layer_name
-            });
-        if !found {
-            panic!("Validation layer not supported");
-        }
-    }
+    assert!(
+        (*VALIDATION_LAYERS).iter().all(|layer_name| {
+            entry
+                .enumerate_instance_layer_properties()
+                .unwrap()
+                .iter()
+                .any(|layer| {
+                    let name = unsafe { CStr::from_ptr(layer.layer_name.as_ptr()) };
+                    let name = name.to_str().unwrap();
+                    name == layer_name
+                })
+        }),
+        "Some validation layer not supported"
+    )
 }
