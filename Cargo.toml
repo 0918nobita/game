@@ -6,4 +6,5 @@ edition = "2018"
 
 [dependencies]
 ash = "0.32"
+once_cell = "1.8"
 winit = "0.25"

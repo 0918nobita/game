@@ -1,25 +1,22 @@
 use ash::{
     extensions::khr::{self, Surface},
     version::{EntryV1_0, InstanceV1_0},
-    vk, Entry,
+    vk, Entry, Instance,
 };
-use std::ffi::{CStr, CString};
+use once_cell::sync::Lazy;
+use std::{
+    ffi::{CStr, CString},
+    os::raw::c_char,
+};
 
-#[cfg(target_os = "windows")]
-pub fn get_window_surface() -> &'static CStr {
-    khr::Win32Surface::name()
-}
-
-#[cfg(target_os = "linux")]
-pub fn get_window_surface() -> &'static CStr {
-    khr::WaylandSurface::name()
-}
+static VALIDATION_LAYERS: Lazy<Vec<String>> =
+    Lazy::new(|| vec!["VK_LAYER_KHRONOS_validation".to_owned()]);
 
 pub struct Application {
     /// `ash::Instance` を利用するためには、同時に `ash::Entry` が Drop されずに存在している必要がある
     #[allow(dead_code)]
-    entry: ash::Entry,
-    instance: ash::Instance,
+    entry: Entry,
+    instance: Instance,
 }
 
 impl Application {
@@ -40,9 +37,18 @@ impl Application {
 
         let extension_names = vec![Surface::name().as_ptr(), get_window_surface().as_ptr()];
 
+        check_validation_layer_support(&entry);
+        let layer_names: Vec<CString> = (*VALIDATION_LAYERS)
+            .iter()
+            .map(|layer| CString::new(layer.clone()).unwrap())
+            .collect();
+        let layer_names: Vec<*const c_char> =
+            layer_names.iter().map(|name| name.as_ptr()).collect();
+
         let create_info = vk::InstanceCreateInfo::builder()
             .application_info(&app_info)
-            .enabled_extension_names(&extension_names);
+            .enabled_extension_names(&extension_names)
+            .enabled_layer_names(&layer_names);
 
         let instance = unsafe { entry.create_instance(&create_info, None)? };
         Ok(Application { entry, instance })
@@ -53,6 +59,33 @@ impl Drop for Application {
     fn drop(&mut self) {
         unsafe {
             self.instance.destroy_instance(None);
+        }
+    }
+}
+
+#[cfg(target_os = "windows")]
+fn get_window_surface() -> &'static CStr {
+    khr::Win32Surface::name()
+}
+
+#[cfg(target_os = "linux")]
+fn get_window_surface() -> &'static CStr {
+    khr::WaylandSurface::name()
+}
+
+fn check_validation_layer_support(entry: &Entry) {
+    for layer_name in (*VALIDATION_LAYERS).iter() {
+        let found = entry
+            .enumerate_instance_layer_properties()
+            .unwrap()
+            .iter()
+            .any(|layer| {
+                let name = unsafe { CStr::from_ptr(layer.layer_name.as_ptr()) };
+                let name = name.to_str().unwrap();
+                name == layer_name
+            });
+        if !found {
+            panic!("Validation layer not supported");
         }
     }
 }

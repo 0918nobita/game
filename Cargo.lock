@@ -357,6 +357,7 @@ name = "game"
 version = "0.1.0"
 dependencies = [
  "ash",
+ "once_cell",
  "winit",
 ]
 
