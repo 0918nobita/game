@@ -10,3 +10,9 @@ ash, winit を用いて開発中
 ```bash
 sudo pacman -S vulkan-intel vulkan-tools vulkan-validation-layers
 ```
+
+## ドキュメント生成
+
+```bash
+cargo doc -p game --document-private-items
+```
