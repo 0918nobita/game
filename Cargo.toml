@@ -6,5 +6,7 @@ edition = "2018"
 
 [dependencies]
 ash = "0.32"
+env_logger = "0.8"
+log = "0.4"
 once_cell = "1.8"
 winit = "0.25"

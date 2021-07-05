@@ -1,3 +1,5 @@
+#[macro_use]
+extern crate log;
 mod surface;
 
 use ash::{
@@ -29,11 +31,13 @@ pub struct Application {
 
 impl Application {
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
+        trace!("Initialization started");
         let entry = unsafe { Entry::new()? };
         let instance = create_instance(&entry)?;
         let physical_device = pick_physical_device(&instance);
         let (device, graphics_queue) =
             create_logical_device_with_graphics_queue(&instance, physical_device);
+        trace!("Initialization completed");
         Ok(Application {
             instance,
             logical_device: device,
@@ -50,6 +54,7 @@ impl Drop for Application {
             self.logical_device.destroy_device(None);
             self.instance.destroy_instance(None);
         }
+        trace!("Logical device and instance were released");
     }
 }
 
@@ -108,7 +113,7 @@ fn pick_physical_device(instance: &Instance) -> PhysicalDevice {
     let props = unsafe { instance.get_physical_device_properties(device) };
     let device_name = unsafe { CStr::from_ptr(props.device_name.as_ptr()) };
     let device_name = device_name.to_str().unwrap().to_owned();
-    println!("Selected physical device: {}", device_name);
+    debug!("Selected physical device: {}", device_name);
 
     device
 }
