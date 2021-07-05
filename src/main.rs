@@ -4,5 +4,5 @@ use game::Application;
 
 fn main() {
     env_logger::init();
-    Application::new().unwrap();
+    Application::new().unwrap().run();
 }

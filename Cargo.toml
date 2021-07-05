@@ -9,7 +9,9 @@ ash = "0.32"
 env_logger = "0.8"
 log = "0.4"
 once_cell = "1.8"
-winit = "0.25"
+
+[dependencies.glfw]
+git = "https://github.com/bjz/glfw-rs.git"
 
 [features]
 default = ["validation_layers"]

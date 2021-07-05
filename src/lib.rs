@@ -13,6 +13,7 @@ use ash::{
     vk::{PhysicalDevice, Queue},
     Device, Entry, Instance,
 };
+use glfw::Context;
 
 /// Vulkan インスタンスと、それがメモリ上に存在しているときに同時に存在している必要のあるデータをまとめたもの
 pub struct Application {
@@ -40,6 +41,28 @@ impl Application {
             _physical_device: physical_device,
             _graphics_queue: graphics_queue,
         })
+    }
+
+    pub fn run(&self) {
+        let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
+
+        let (mut window, event_receiver) = glfw
+            .create_window(500, 300, "Game", glfw::WindowMode::Windowed)
+            .expect("Failed to create window");
+
+        window.set_key_polling(true);
+        window.make_current();
+
+        while !window.should_close() {
+            glfw.poll_events();
+            for (_, event) in glfw::flush_messages(&event_receiver) {
+                match event {
+                    glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _)
+                    | glfw::WindowEvent::Close => window.set_should_close(true),
+                    _ => (),
+                }
+            }
+        }
     }
 }
 
