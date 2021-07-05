@@ -1,3 +1,5 @@
+//! 論理デバイス関連
+
 use super::layer;
 use super::queue_family;
 use ash::{
@@ -6,6 +8,7 @@ use ash::{
     Device, Instance,
 };
 
+/// 指定された物理デバイスをもとに論理デバイスを生成し、選択したキューファミリからグラフィックスキューを取得する
 pub fn create_logical_device_with_graphics_queue(
     instance: &Instance,
     device: PhysicalDevice,

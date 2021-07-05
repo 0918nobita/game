@@ -1,3 +1,5 @@
+//! 物理デバイス関連
+
 use super::queue_family;
 use ash::{version::InstanceV1_0, vk::PhysicalDevice, Instance};
 use std::ffi::CStr;

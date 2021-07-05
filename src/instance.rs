@@ -1,3 +1,5 @@
+//! Vulkan インスタンス関連
+
 mod surface;
 
 use super::layer;

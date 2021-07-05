@@ -1,3 +1,5 @@
+//! バリデーションレイヤ関連
+
 use ash::{version::EntryV1_0, Entry};
 use once_cell::sync::Lazy;
 use std::{

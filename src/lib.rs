@@ -1,3 +1,5 @@
+//! 開発中のインディーゲーム
+
 #[macro_use]
 extern crate log;
 mod instance;
