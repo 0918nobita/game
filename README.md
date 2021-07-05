@@ -11,6 +11,18 @@ ash, winit を用いて開発中
 sudo pacman -S vulkan-intel vulkan-tools vulkan-validation-layers
 ```
 
+## 実行
+
+```bash
+cargo run
+```
+
+### バリデーションレイヤを無効化して実行
+
+```bash
+cargo run --no-default-features
+```
+
 ## ドキュメント生成
 
 ```bash

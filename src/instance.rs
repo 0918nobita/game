@@ -26,9 +26,13 @@ pub fn create_instance(entry: &Entry) -> Result<Instance, Box<dyn std::error::Er
 
     let extension_names = surface::get_surface_extensions();
 
-    layer::check_validation_layer_support(&entry);
-
-    let layer_names = layer::get_layer_name_ptrs();
+    let layer_names = if cfg!(feature = "validation_layers") {
+        debug!("Validation layers will be enabled");
+        layer::check_validation_layer_support(&entry);
+        layer::get_layer_name_ptrs()
+    } else {
+        Vec::new()
+    };
 
     let create_info = InstanceCreateInfo::builder()
         .application_info(&app_info)
