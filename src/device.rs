@@ -13,50 +13,57 @@ use ash::{
 };
 use std::ffi::CStr;
 
-pub fn create_logical_device_and_graphics_queue(
+struct Queues {
+    graphics: u32,
+    presentation: u32,
+}
+
+pub fn create_logical_device_and_queues(
     instance: &Instance,
     surface: &Surface,
     surface_khr: SurfaceKHR,
-) -> anyhow::Result<(Device, Queue)> {
-    let mut physical_device_and_queue_family_index: Option<(PhysicalDevice, u32)> = None;
-
-    for physical_device in unsafe { instance.enumerate_physical_devices().unwrap() }.into_iter() {
-        let props =
-            unsafe { instance.get_physical_device_queue_family_properties(physical_device) };
-        for (index, family) in props.iter().enumerate() {
-            if family.queue_count <= 0 || !family.queue_flags.contains(QueueFlags::GRAPHICS) {
-                break;
-            }
-            let index = index as u32;
-            let result = unsafe {
-                surface.get_physical_device_surface_support(physical_device, index, surface_khr)
-            };
-            if let Ok(false) | Err(_) = result {
-                break;
-            }
-            physical_device_and_queue_family_index = Some((physical_device, index));
-        }
-    }
-
-    let (physical_device, queue_family_index) =
-        physical_device_and_queue_family_index.expect("No suitable physical device");
+) -> anyhow::Result<(Device, Queue, Queue)> {
+    let physical_devices = unsafe { instance.enumerate_physical_devices() }
+        .context("Failed to enumerate physical devices")?;
+    let (
+        physical_device,
+        Queues {
+            graphics,
+            presentation,
+        },
+    ) = physical_devices
+        .into_iter()
+        .find_map(|device| {
+            find_suitable_queues(instance, surface, surface_khr, device)
+                .map(|queues| (device, queues))
+        })
+        .expect("No suitable physical device");
 
     {
         let props = unsafe { instance.get_physical_device_properties(physical_device) };
         let device_name = unsafe { CStr::from_ptr(props.device_name.as_ptr()) };
         let device_name = device_name.to_str().unwrap().to_owned();
         debug!("Selected physical device: {}", device_name);
+        debug!("Queue family index (Graphics): {}", graphics);
+        debug!("Queue family index (Presentation): {}", presentation);
     }
 
     let queue_priorities = [1.0f32];
-    let queue_create_infos = [DeviceQueueCreateInfo::builder()
-        .queue_family_index(queue_family_index)
-        .queue_priorities(&queue_priorities)
-        .build()];
+    let queue_create_infos: Vec<DeviceQueueCreateInfo> = {
+        let mut indices = vec![graphics, presentation];
+        indices.dedup();
+        indices
+            .iter()
+            .map(|index| {
+                DeviceQueueCreateInfo::builder()
+                    .queue_family_index(*index)
+                    .queue_priorities(&queue_priorities)
+                    .build()
+            })
+            .collect()
+    };
     let device_features = PhysicalDeviceFeatures::builder().build();
-
     let layer_name_ptrs = layer::get_layer_name_ptrs();
-
     let device_create_info = DeviceCreateInfo::builder()
         .queue_create_infos(&queue_create_infos)
         .enabled_features(&device_features)
@@ -69,7 +76,38 @@ pub fn create_logical_device_and_graphics_queue(
             .context("Failed to create logical device")?
     };
 
-    let graphics_queue = unsafe { device.get_device_queue(queue_family_index, 0) };
+    let graphics_queue = unsafe { device.get_device_queue(graphics, 0) };
+    let present_queue = unsafe { device.get_device_queue(presentation, 0) };
 
-    Ok((device, graphics_queue))
+    Ok((device, graphics_queue, present_queue))
+}
+
+fn find_suitable_queues(
+    instance: &Instance,
+    surface: &Surface,
+    surface_khr: SurfaceKHR,
+    device: PhysicalDevice,
+) -> Option<Queues> {
+    let queue_family_props =
+        unsafe { instance.get_physical_device_queue_family_properties(device) };
+    let graphics = queue_family_props
+        .iter()
+        .enumerate()
+        .find_map(|(index, family)| {
+            (family.queue_count > 0 && family.queue_flags.contains(QueueFlags::GRAPHICS))
+                .then(|| index as u32)
+        })?;
+    let presentation = queue_family_props
+        .iter()
+        .enumerate()
+        .find_map(|(index, _)| {
+            let index = index as u32;
+            unsafe { surface.get_physical_device_surface_support(device, index, surface_khr) }
+                .unwrap_or(false)
+                .then(|| index)
+        })?;
+    Some(Queues {
+        graphics,
+        presentation,
+    })
 }

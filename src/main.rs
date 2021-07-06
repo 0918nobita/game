@@ -71,8 +71,8 @@ fn main() -> anyhow::Result<()> {
         trace!("SurfaceKHR was destroyed")
     }
 
-    let (logical_device, _graphics_queue) =
-        device::create_logical_device_and_graphics_queue(&instance, &surface, surface_khr)?;
+    let (logical_device, _graphics_queue, _present_queue) =
+        device::create_logical_device_and_queues(&instance, &surface, surface_khr)?;
     defer! {
         unsafe { logical_device.destroy_device(None) }
         trace!("Logical device was destroyed");
