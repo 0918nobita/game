@@ -78,6 +78,8 @@ dependencies = [
  "glfw",
  "log",
  "once_cell",
+ "scopeguard",
+ "vk-sys 0.7.0",
 ]
 
 [[package]]
@@ -91,6 +93,7 @@ dependencies = [
  "objc",
  "raw-window-handle",
  "semver",
+ "vk-sys 0.4.0",
  "winapi",
 ]
 
@@ -200,6 +203,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f497285884f3fcff424ffc933e56d7cbca511def0c9831a7f9b5f6153e3cc89b"
 
 [[package]]
+name = "scopeguard"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
+
+[[package]]
 name = "semver"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -222,6 +231,18 @@ checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
  "winapi-util",
 ]
+
+[[package]]
+name = "vk-sys"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "36f5fd4a7d6d5d19808610583131c0aed271556527cad4cb71c436831a28e059"
+
+[[package]]
+name = "vk-sys"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "584003afc735800b0619a724332f37a28788f56fa9349874ee2f50874be0d239"
 
 [[package]]
 name = "winapi"
