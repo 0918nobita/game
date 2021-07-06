@@ -1,25 +1,38 @@
 use ash::{
+    extensions::khr::Surface,
     version::{DeviceV1_0, InstanceV1_0},
-    vk::Handle,
+    vk::{Handle, SurfaceKHR},
     Entry,
 };
+use game::device;
+use thiserror::Error;
 
-#[macro_use]
+#[macro_use(ensure)]
+extern crate anyhow;
+#[macro_use(trace, debug)]
 extern crate log;
 #[macro_use(defer)]
 extern crate scopeguard;
 extern crate game;
 
-use game::{logical_device, physical_device};
+#[derive(Error, Debug)]
+enum InitializationError {
+    #[error("GLFW doesn't support Vulkan")]
+    VulkanNotSupported,
+    #[error("Failed to create window surface")]
+    WindowSurfaceCreationFailed,
+}
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> anyhow::Result<()> {
     env_logger::init();
-
     trace!("Initialization started");
 
     let mut glfw = glfw::init(glfw::FAIL_ON_ERRORS).unwrap();
     glfw.window_hint(glfw::WindowHint::ClientApi(glfw::ClientApiHint::NoApi));
-    assert!(glfw.vulkan_supported());
+    ensure!(
+        glfw.vulkan_supported(),
+        InitializationError::VulkanNotSupported
+    );
 
     let required_extensions = glfw.get_required_instance_extensions().unwrap();
     debug!(
@@ -35,19 +48,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         trace!("Instance was destroyed")
     }
 
-    let physical_device = physical_device::pick_physical_device(&instance);
-
-    let (logical_device, _graphics_queue) =
-        logical_device::create_logical_device_with_graphics_queue(&instance, physical_device);
-    defer! {
-        unsafe { logical_device.destroy_device(None) }
-        trace!("Logical device was destroyed");
-    }
-
     let (mut window, event_receiver) = glfw
         .create_window(500, 300, "Game", glfw::WindowMode::Windowed)
         .expect("Failed to create window");
-
     window.set_key_polling(true);
 
     let mut raw_surface = 0;
@@ -56,13 +59,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         std::ptr::null(),
         &mut raw_surface,
     );
-    assert!(result == 0, "Failed to create window surface");
+    ensure!(
+        result == 0,
+        InitializationError::WindowSurfaceCreationFailed
+    );
 
-    let surface_loader = ash::extensions::khr::Surface::new(&entry, &instance);
-    let surface = ash::vk::SurfaceKHR::from_raw(raw_surface);
+    let surface = Surface::new(&entry, &instance);
+    let surface_khr = SurfaceKHR::from_raw(raw_surface);
     defer! {
-        unsafe { surface_loader.destroy_surface(surface, None) }
+        unsafe { surface.destroy_surface(surface_khr, None) }
         trace!("SurfaceKHR was destroyed")
+    }
+
+    let (logical_device, _graphics_queue) =
+        device::create_logical_device_and_graphics_queue(&instance, &surface, surface_khr)?;
+    defer! {
+        unsafe { logical_device.destroy_device(None) }
+        trace!("Logical device was destroyed");
     }
 
     trace!("Event loop started");

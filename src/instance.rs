@@ -8,10 +8,7 @@ use ash::{
 };
 use std::{ffi::CString, os::raw::c_char};
 
-pub fn create_instance(
-    entry: &Entry,
-    extension_names: &Vec<String>,
-) -> Result<Instance, Box<dyn std::error::Error>> {
+pub fn create_instance(entry: &Entry, extension_names: &Vec<String>) -> anyhow::Result<Instance> {
     let application_name = CString::new("Game")?;
     let application_name = &application_name.as_c_str();
 
