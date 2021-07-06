@@ -1,6 +1,6 @@
 # ゲーム
 
-ash, winit を用いて開発中
+ash, glfw-rs を用いて開発中
 
 ## 環境構築
 
@@ -8,7 +8,7 @@ ash, winit を用いて開発中
 - OS: Arch Linux
 
 ```bash
-sudo pacman -S vulkan-intel vulkan-tools vulkan-validation-layers
+sudo pacman -S cmake glfw-wayland vulkan-intel vulkan-tools vulkan-validation-layers
 ```
 
 ## 実行
