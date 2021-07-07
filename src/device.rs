@@ -6,8 +6,9 @@ use ash::{
     extensions::khr::{Surface, Swapchain},
     version::{DeviceV1_0, InstanceV1_0},
     vk::{
-        DeviceCreateInfo, DeviceQueueCreateInfo, Extent2D, PhysicalDevice, PhysicalDeviceFeatures,
-        Queue, QueueFlags, SurfaceCapabilitiesKHR, SurfaceKHR,
+        ColorSpaceKHR, DeviceCreateInfo, DeviceQueueCreateInfo, Extent2D, Format, PhysicalDevice,
+        PhysicalDeviceFeatures, Queue, QueueFlags, SurfaceCapabilitiesKHR, SurfaceFormatKHR,
+        SurfaceKHR,
     },
     Device, Instance,
 };
@@ -68,17 +69,21 @@ pub fn create_logical_device_and_queues(
         extent2d.width, extent2d.height
     );
 
-    let formats =
+    let available_formats =
         unsafe { surface.get_physical_device_surface_formats(physical_device, surface_khr) }
             .context("Failed to get surface formats of physical device")?;
     trace!("Available pixel formats:");
-    for f in formats.iter() {
+    for f in available_formats.iter() {
         trace!(
-            "    - Format: {:?}, ColorSpace: {:?}",
+            "    - PixelFormat: {:?}, ColorSpace: {:?}",
             f.format,
             f.color_space
         )
     }
+
+    let format = choose_swapchain_surface_format(&available_formats);
+    debug!("Pixel format: {:?}", format.format);
+    debug!("Color space: {:?}", format.color_space);
 
     let present_modes =
         unsafe { surface.get_physical_device_surface_present_modes(physical_device, surface_khr) }
@@ -124,6 +129,22 @@ pub fn create_logical_device_and_queues(
     let present_queue = unsafe { device.get_device_queue(presentation, 0) };
 
     Ok((device, graphics_queue, present_queue))
+}
+
+fn choose_swapchain_surface_format(available_formats: &[SurfaceFormatKHR]) -> SurfaceFormatKHR {
+    if available_formats.len() == 1 && available_formats[0].format == Format::UNDEFINED {
+        return SurfaceFormatKHR {
+            format: Format::B8G8R8A8_UNORM,
+            color_space: ColorSpaceKHR::SRGB_NONLINEAR,
+        };
+    }
+    *available_formats
+        .iter()
+        .find(|format| {
+            format.format == Format::B8G8R8A8_UNORM
+                && format.color_space == ColorSpaceKHR::SRGB_NONLINEAR
+        })
+        .unwrap_or(&available_formats[0])
 }
 
 /// グラフィックキューと表示用キューをそれぞれ選択する
