@@ -3,7 +3,7 @@
 use super::layer;
 use anyhow::Context;
 use ash::{
-    extensions::khr::Surface,
+    extensions::khr::{Surface, Swapchain},
     version::{DeviceV1_0, InstanceV1_0},
     vk::{
         DeviceCreateInfo, DeviceQueueCreateInfo, PhysicalDevice, PhysicalDeviceFeatures, Queue,
@@ -34,6 +34,30 @@ pub fn create_logical_device_and_queues(
     ) = physical_devices
         .into_iter()
         .find_map(|device| {
+            let extension_props =
+                unsafe { instance.enumerate_device_extension_properties(device) }.ok()?;
+            let is_swapchain_supported = extension_props.iter().any(|ext| {
+                let name = unsafe { CStr::from_ptr(ext.extension_name.as_ptr()) };
+                name == Swapchain::name()
+            });
+            debug!(
+                "Swapchain support: {}",
+                if is_swapchain_supported { "yes" } else { "no" }
+            );
+
+            let capabilities =
+                unsafe { surface.get_physical_device_surface_capabilities(device, surface_khr) }
+                    .ok()?;
+            debug!("Capabilities: {:?}", capabilities);
+
+            let formats =
+                unsafe { surface.get_physical_device_surface_formats(device, surface_khr) }.ok()?;
+            debug!("Available pixel formats: {:?}", formats);
+
+            let present_modes =
+                unsafe { surface.get_physical_device_surface_present_modes(device, surface_khr) }
+                    .ok()?;
+            debug!("Available present modes: {:?}", present_modes);
             find_suitable_queues(instance, surface, surface_khr, device)
                 .map(|queues| (device, queues))
         })
@@ -90,6 +114,7 @@ fn find_suitable_queues(
 ) -> Option<Queues> {
     let queue_family_props =
         unsafe { instance.get_physical_device_queue_family_properties(device) };
+
     let graphics = queue_family_props
         .iter()
         .enumerate()
