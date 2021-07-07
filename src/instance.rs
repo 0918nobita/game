@@ -6,9 +6,12 @@ use ash::{
     vk::{make_version, ApplicationInfo, InstanceCreateInfo},
     Entry, Instance,
 };
-use std::{ffi::CString, os::raw::c_char};
+use std::{
+    ffi::{CStr, CString},
+    os::raw::c_char,
+};
 
-pub fn create_instance(entry: &Entry, extension_names: &Vec<String>) -> anyhow::Result<Instance> {
+pub fn create_instance(entry: &Entry, extension_names: &[String]) -> anyhow::Result<Instance> {
     let application_name = CString::new("Game")?;
     let application_name = &application_name.as_c_str();
 
@@ -23,10 +26,11 @@ pub fn create_instance(entry: &Entry, extension_names: &Vec<String>) -> anyhow::
         .build();
 
     let layer_names = if cfg!(feature = "validation_layers") {
-        debug!("Validation layers will be enabled");
+        debug!("Validation layers: enabled");
         layer::check_validation_layer_support(&entry);
         layer::get_layer_name_ptrs()
     } else {
+        debug!("Validation layers: disabled");
         Vec::new()
     };
 
@@ -42,5 +46,20 @@ pub fn create_instance(entry: &Entry, extension_names: &Vec<String>) -> anyhow::
         .enabled_extension_names(&extension_names_raw)
         .enabled_layer_names(&layer_names);
 
-    Ok(unsafe { entry.create_instance(&create_info, None)? })
+    let instance = unsafe { entry.create_instance(&create_info, None)? };
+    trace!(
+        "Instance extensions: {}",
+        entry
+            .enumerate_instance_extension_properties()?
+            .iter()
+            .map(
+                |ext_prop| unsafe { CStr::from_ptr(ext_prop.extension_name.as_ptr()) }
+                    .to_str()
+                    .unwrap()
+            )
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+
+    Ok(instance)
 }

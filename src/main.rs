@@ -7,11 +7,11 @@ use ash::{
 use game::{device, window};
 use thiserror::Error;
 
-#[macro_use(ensure)]
+#[macro_use]
 extern crate anyhow;
-#[macro_use(trace, debug)]
+#[macro_use]
 extern crate log;
-#[macro_use(defer)]
+#[macro_use]
 extern crate scopeguard;
 extern crate game;
 
@@ -35,9 +35,9 @@ fn main() -> anyhow::Result<()> {
     );
 
     let required_extensions = glfw.get_required_instance_extensions().unwrap();
-    debug!(
-        "Instance extensions required by GLFW: {:?}",
-        required_extensions
+    trace!(
+        "Instance extensions required by GLFW: {}",
+        required_extensions.join(", ")
     );
 
     let entry = unsafe { Entry::new()? };

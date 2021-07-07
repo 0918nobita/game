@@ -7,8 +7,8 @@ use ash::{
     version::{DeviceV1_0, InstanceV1_0},
     vk::{
         ColorSpaceKHR, DeviceCreateInfo, DeviceQueueCreateInfo, Extent2D, Format, PhysicalDevice,
-        PhysicalDeviceFeatures, Queue, QueueFlags, SurfaceCapabilitiesKHR, SurfaceFormatKHR,
-        SurfaceKHR,
+        PhysicalDeviceFeatures, PresentModeKHR, Queue, QueueFlags, SurfaceCapabilitiesKHR,
+        SurfaceFormatKHR, SurfaceKHR,
     },
     Device, Instance,
 };
@@ -39,13 +39,10 @@ pub fn create_logical_device_and_queues(
         .find_map(|device| {
             let extension_props =
                 unsafe { instance.enumerate_device_extension_properties(device) }.ok()?;
-            extension_props
-                .iter()
-                .any(|ext| {
-                    let name = unsafe { CStr::from_ptr(ext.extension_name.as_ptr()) };
-                    name == Swapchain::name()
-                })
-                .then(|| ())?;
+            extension_props.iter().find(|ext| {
+                let name = unsafe { CStr::from_ptr(ext.extension_name.as_ptr()) };
+                name == Swapchain::name()
+            })?;
             find_suitable_queues(instance, surface, surface_khr, device)
                 .map(|queues| (device, queues))
         })
@@ -85,17 +82,20 @@ pub fn create_logical_device_and_queues(
     debug!("Pixel format: {:?}", format.format);
     debug!("Color space: {:?}", format.color_space);
 
-    let present_modes =
+    let available_present_modes =
         unsafe { surface.get_physical_device_surface_present_modes(physical_device, surface_khr) }
             .context("Failed to get present modes of physical device")?;
     trace!(
         "Available present modes: {}",
-        present_modes
+        available_present_modes
             .iter()
             .map(|m| format!("{:?}", m))
             .collect::<Vec<_>>()
             .join(", ")
     );
+
+    let present_mode = choose_swapchain_surface_present_mode(&available_present_modes);
+    debug!("Present mode: {:?}", present_mode);
 
     let queue_priorities = [1.0f32];
     let queue_create_infos: Vec<DeviceQueueCreateInfo> = {
@@ -145,6 +145,18 @@ fn choose_swapchain_surface_format(available_formats: &[SurfaceFormatKHR]) -> Su
                 && format.color_space == ColorSpaceKHR::SRGB_NONLINEAR
         })
         .unwrap_or(&available_formats[0])
+}
+
+fn choose_swapchain_surface_present_mode(
+    available_present_modes: &[PresentModeKHR],
+) -> PresentModeKHR {
+    if available_present_modes.contains(&PresentModeKHR::MAILBOX) {
+        PresentModeKHR::MAILBOX
+    } else if available_present_modes.contains(&PresentModeKHR::FIFO) {
+        PresentModeKHR::FIFO
+    } else {
+        PresentModeKHR::IMMEDIATE
+    }
 }
 
 /// グラフィックキューと表示用キューをそれぞれ選択する
