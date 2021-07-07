@@ -1,13 +1,13 @@
 //! 論理デバイス・グラフィックキュー関連
 
-use super::layer;
+use super::{layer, window};
 use anyhow::Context;
 use ash::{
     extensions::khr::{Surface, Swapchain},
     version::{DeviceV1_0, InstanceV1_0},
     vk::{
-        DeviceCreateInfo, DeviceQueueCreateInfo, PhysicalDevice, PhysicalDeviceFeatures, Queue,
-        QueueFlags, SurfaceKHR,
+        DeviceCreateInfo, DeviceQueueCreateInfo, Extent2D, PhysicalDevice, PhysicalDeviceFeatures,
+        Queue, QueueFlags, SurfaceCapabilitiesKHR, SurfaceKHR,
     },
     Device, Instance,
 };
@@ -18,6 +18,7 @@ struct Queues {
     presentation: u32,
 }
 
+/// 論理デバイス・グラフィックキュー・表示用キューを生成する
 pub fn create_logical_device_and_queues(
     instance: &Instance,
     surface: &Surface,
@@ -25,6 +26,7 @@ pub fn create_logical_device_and_queues(
 ) -> anyhow::Result<(Device, Queue, Queue)> {
     let physical_devices = unsafe { instance.enumerate_physical_devices() }
         .context("Failed to enumerate physical devices")?;
+    trace!("Start searching suitable physical device");
     let (
         physical_device,
         Queues {
@@ -36,28 +38,13 @@ pub fn create_logical_device_and_queues(
         .find_map(|device| {
             let extension_props =
                 unsafe { instance.enumerate_device_extension_properties(device) }.ok()?;
-            let is_swapchain_supported = extension_props.iter().any(|ext| {
-                let name = unsafe { CStr::from_ptr(ext.extension_name.as_ptr()) };
-                name == Swapchain::name()
-            });
-            debug!(
-                "Swapchain support: {}",
-                if is_swapchain_supported { "yes" } else { "no" }
-            );
-
-            let capabilities =
-                unsafe { surface.get_physical_device_surface_capabilities(device, surface_khr) }
-                    .ok()?;
-            debug!("Capabilities: {:?}", capabilities);
-
-            let formats =
-                unsafe { surface.get_physical_device_surface_formats(device, surface_khr) }.ok()?;
-            debug!("Available pixel formats: {:?}", formats);
-
-            let present_modes =
-                unsafe { surface.get_physical_device_surface_present_modes(device, surface_khr) }
-                    .ok()?;
-            debug!("Available present modes: {:?}", present_modes);
+            extension_props
+                .iter()
+                .any(|ext| {
+                    let name = unsafe { CStr::from_ptr(ext.extension_name.as_ptr()) };
+                    name == Swapchain::name()
+                })
+                .then(|| ())?;
             find_suitable_queues(instance, surface, surface_khr, device)
                 .map(|queues| (device, queues))
         })
@@ -71,6 +58,39 @@ pub fn create_logical_device_and_queues(
         debug!("Queue family index (Graphics): {}", graphics);
         debug!("Queue family index (Presentation): {}", presentation);
     }
+
+    let capabilities =
+        unsafe { surface.get_physical_device_surface_capabilities(physical_device, surface_khr) }
+            .context("Failed to get surface capabilities of physical device")?;
+    let extent2d = decide_swapchain_extent(capabilities);
+    debug!(
+        "Window surface extent: {:?} x {:?}",
+        extent2d.width, extent2d.height
+    );
+
+    let formats =
+        unsafe { surface.get_physical_device_surface_formats(physical_device, surface_khr) }
+            .context("Failed to get surface formats of physical device")?;
+    trace!("Available pixel formats:");
+    for f in formats.iter() {
+        trace!(
+            "    - Format: {:?}, ColorSpace: {:?}",
+            f.format,
+            f.color_space
+        )
+    }
+
+    let present_modes =
+        unsafe { surface.get_physical_device_surface_present_modes(physical_device, surface_khr) }
+            .context("Failed to get present modes of physical device")?;
+    trace!(
+        "Available present modes: {}",
+        present_modes
+            .iter()
+            .map(|m| format!("{:?}", m))
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
 
     let queue_priorities = [1.0f32];
     let queue_create_infos: Vec<DeviceQueueCreateInfo> = {
@@ -106,6 +126,7 @@ pub fn create_logical_device_and_queues(
     Ok((device, graphics_queue, present_queue))
 }
 
+/// グラフィックキューと表示用キューをそれぞれ選択する
 fn find_suitable_queues(
     instance: &Instance,
     surface: &Surface,
@@ -135,4 +156,16 @@ fn find_suitable_queues(
         graphics,
         presentation,
     })
+}
+
+/// サーフェス制約をもとに、表示サイズを決定する
+fn decide_swapchain_extent(capabilities: SurfaceCapabilitiesKHR) -> Extent2D {
+    if capabilities.current_extent.width != std::u32::MAX {
+        return capabilities.current_extent;
+    }
+    let min = capabilities.min_image_extent;
+    let max = capabilities.max_image_extent;
+    let width = window::WIDTH.max(max.width).min(min.width);
+    let height = window::HEIGHT.max(max.height).min(min.height);
+    Extent2D { width, height }
 }

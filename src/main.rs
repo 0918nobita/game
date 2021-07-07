@@ -4,7 +4,7 @@ use ash::{
     vk::{Handle, SurfaceKHR},
     Entry,
 };
-use game::device;
+use game::{device, window};
 use thiserror::Error;
 
 #[macro_use(ensure)]
@@ -49,7 +49,12 @@ fn main() -> anyhow::Result<()> {
     }
 
     let (mut window, event_receiver) = glfw
-        .create_window(500, 300, "Game", glfw::WindowMode::Windowed)
+        .create_window(
+            window::WIDTH,
+            window::HEIGHT,
+            "Game",
+            glfw::WindowMode::Windowed,
+        )
         .expect("Failed to create window");
     window.set_key_polling(true);
 
