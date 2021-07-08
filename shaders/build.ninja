@@ -1,0 +1,6 @@
+rule compile
+    description = Compile $in (GLSL shader) into $out (SPIR-V binary)
+    command = glslangValidator -V $in -o $out
+
+build vert.spv: compile shader.vert
+build frag.spv: compile shader.frag

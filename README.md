@@ -8,7 +8,25 @@ ash, glfw-rs を用いて開発中
 - OS: Arch Linux
 
 ```bash
-sudo pacman -S cmake glfw-wayland vulkan-intel vulkan-tools vulkan-validation-layers
+yay -S ninja cmake glfw-wayland \
+    vulkan-intel vulkan-tools vulkan-validation-layers \
+    glslang
+```
+
+## シェーダのコンパイル
+
+GLSL シェーダ ( `.vert` , `.frag` ) をもとに SPIR-V バイナリを生成します。
+
+```bash
+cd shaders
+ninja
+```
+
+### SPIR-V バイナリの削除
+
+```bash
+cd shaders
+ninja -t clean
 ```
 
 ## 実行
