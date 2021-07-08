@@ -1,10 +1,10 @@
 use ash::{
     extensions::khr::Surface,
     version::{DeviceV1_0, InstanceV1_0},
-    vk::{Handle, SurfaceKHR},
+    vk::{Handle, SharingMode, SurfaceKHR},
     Entry,
 };
-use game::{device, window};
+use game::{device, swapchain::SwapchainWrapper, window};
 use thiserror::Error;
 
 #[macro_use]
@@ -57,6 +57,7 @@ fn main() -> anyhow::Result<()> {
         )
         .expect("Failed to create window");
     window.set_key_polling(true);
+    trace!("Window was created");
 
     let mut raw_surface = 0;
     let result = window.create_window_surface(
@@ -76,12 +77,34 @@ fn main() -> anyhow::Result<()> {
         trace!("SurfaceKHR was destroyed")
     }
 
-    let (logical_device, _graphics_queue, _present_queue) =
-        device::create_logical_device_and_queues(&instance, &surface, surface_khr)?;
+    let (physical_device, logical_device, queues) =
+        device::create_device_and_queue_indices(&instance, &surface, surface_khr)?;
     defer! {
         unsafe { logical_device.destroy_device(None) }
-        trace!("Logical device was destroyed");
+        trace!("Logical device was destroyed")
     }
+
+    let _graphics_queue = unsafe { logical_device.get_device_queue(queues.graphics, 0) };
+    let _present_queue = unsafe { logical_device.get_device_queue(queues.presentation, 0) };
+
+    let mut queue_family_indices = vec![queues.graphics, queues.presentation];
+    queue_family_indices.dedup();
+    let image_sharing_mode = if queue_family_indices.len() > 1 {
+        SharingMode::CONCURRENT
+    } else {
+        SharingMode::EXCLUSIVE
+    };
+    debug!("Image sharing mode: {:?}", image_sharing_mode);
+
+    let _swapchain = SwapchainWrapper::new(
+        &instance,
+        &surface,
+        surface_khr,
+        physical_device,
+        &logical_device,
+        image_sharing_mode,
+        &queue_family_indices,
+    )?;
 
     trace!("Event loop started");
     while !window.should_close() {
