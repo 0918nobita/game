@@ -3,10 +3,7 @@ use anyhow::Context;
 use ash::{
     extensions::khr::{Surface, Swapchain},
     version::DeviceV1_0,
-    vk::{
-        self, ColorSpaceKHR, Extent2D, PhysicalDevice, PresentModeKHR,
-        SurfaceFormatKHR,
-    },
+    vk::{self, ColorSpaceKHR, Extent2D, PhysicalDevice, PresentModeKHR, SurfaceFormatKHR},
     Device, Instance,
 };
 
