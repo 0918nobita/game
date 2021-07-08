@@ -18,8 +18,34 @@ pub static VERT_SHADER: Lazy<Vec<u32>> =
 pub static FRAG_SHADER: Lazy<Vec<u32>> =
     Lazy::new(|| read_spv(&mut Cursor::new(FRAG_SPV)).unwrap());
 
-pub fn create_shader_module(device: &Device, code: &[u32]) -> anyhow::Result<ShaderModule> {
-    let create_info = ShaderModuleCreateInfo::builder().code(code).build();
-    unsafe { device.create_shader_module(&create_info, None) }
-        .context("Failed to create shader module")
+pub struct ShaderModuleWrapper<'a> {
+    logical_device: &'a Device,
+    shader_module_raw: ShaderModule,
+}
+
+impl<'a> ShaderModuleWrapper<'a> {
+    pub fn new(
+        logical_device: &'a Device,
+        code: &[u32],
+    ) -> anyhow::Result<ShaderModuleWrapper<'a>> {
+        let create_info = ShaderModuleCreateInfo::builder().code(code).build();
+        let shader_module_raw = unsafe { logical_device.create_shader_module(&create_info, None) }
+            .context("Failed to create shader module")?;
+        trace!("Shader module {:?} was created", shader_module_raw);
+        Ok(ShaderModuleWrapper {
+            logical_device,
+            shader_module_raw,
+        })
+    }
+}
+
+impl<'a> Drop for ShaderModuleWrapper<'a> {
+    fn drop(&mut self) {
+        let shader_module_id = format!("{:?}", self.shader_module_raw);
+        unsafe {
+            self.logical_device
+                .destroy_shader_module(self.shader_module_raw, None);
+        }
+        trace!("Shader module {} was destroyed", shader_module_id)
+    }
 }

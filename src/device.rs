@@ -1,6 +1,6 @@
 //! 論理デバイス・グラフィックキュー関連
 
-use super::layer;
+use crate::layer;
 use anyhow::Context;
 use ash::{
     extensions::khr::{Surface, Swapchain},

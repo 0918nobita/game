@@ -1,6 +1,6 @@
 //! Vulkan インスタンス関連
 
-use super::layer;
+use crate::layer;
 use ash::{
     version::EntryV1_0,
     vk::{make_version, ApplicationInfo, InstanceCreateInfo},

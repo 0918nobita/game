@@ -6,6 +6,7 @@ extern crate log;
 pub mod device;
 pub mod instance;
 mod layer;
+pub mod pipeline;
 pub mod shader;
 pub mod swapchain;
 pub mod window;

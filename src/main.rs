@@ -4,7 +4,7 @@ use ash::{
     vk::{Handle, SharingMode, SurfaceKHR},
     Entry,
 };
-use game::{device, swapchain::SwapchainWrapper, window};
+use game::{device, pipeline::create_pipeline, swapchain::SwapchainWrapper, window};
 use thiserror::Error;
 
 #[macro_use]
@@ -105,6 +105,8 @@ fn main() -> anyhow::Result<()> {
         image_sharing_mode,
         &queue_family_indices,
     )?;
+
+    create_pipeline(&logical_device)?;
 
     trace!("Event loop was started");
     while !window.should_close() {
