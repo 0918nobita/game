@@ -3,7 +3,7 @@ use anyhow::Context;
 use ash::{
     extensions::khr::{Surface, Swapchain},
     vk::{
-        ColorSpaceKHR, CompositeAlphaFlagsKHR, Extent2D, Format, ImageUsageFlags, PhysicalDevice,
+        self, ColorSpaceKHR, CompositeAlphaFlagsKHR, Extent2D, ImageUsageFlags, PhysicalDevice,
         PresentModeKHR, SharingMode, SurfaceCapabilitiesKHR, SurfaceFormatKHR, SurfaceKHR,
         SwapchainCreateInfoKHR, SwapchainKHR,
     },
@@ -12,7 +12,8 @@ use ash::{
 
 pub struct SwapchainWrapper {
     swapchain_raw: Swapchain,
-    swapchain_khr_raw: SwapchainKHR,
+    swapchain_khr: SwapchainKHR,
+    _images: Vec<vk::Image>,
 }
 
 impl SwapchainWrapper {
@@ -94,12 +95,17 @@ impl SwapchainWrapper {
             .build();
 
         let swapchain_raw = Swapchain::new(instance, logical_device);
-        let swapchain_khr_raw = unsafe { swapchain_raw.create_swapchain(&create_info, None) }
+        let swapchain_khr = unsafe { swapchain_raw.create_swapchain(&create_info, None) }
             .context("Failed to create SwapchainKHR")?;
         trace!("SwapchainKHR was created");
+
+        let images = unsafe { swapchain_raw.get_swapchain_images(swapchain_khr) }
+            .context("Failed to get swapchain images")?;
+
         Ok(SwapchainWrapper {
             swapchain_raw,
-            swapchain_khr_raw,
+            swapchain_khr,
+            _images: images,
         })
     }
 }
@@ -108,7 +114,7 @@ impl Drop for SwapchainWrapper {
     fn drop(&mut self) {
         unsafe {
             self.swapchain_raw
-                .destroy_swapchain(self.swapchain_khr_raw, None)
+                .destroy_swapchain(self.swapchain_khr, None)
         }
         trace!("SwapchainKHR was destroyed")
     }
@@ -126,16 +132,16 @@ fn decide_swapchain_extent(capabilities: SurfaceCapabilitiesKHR) -> Extent2D {
 }
 
 fn choose_swapchain_surface_format(available_formats: &[SurfaceFormatKHR]) -> SurfaceFormatKHR {
-    if available_formats.len() == 1 && available_formats[0].format == Format::UNDEFINED {
+    if available_formats.len() == 1 && available_formats[0].format == vk::Format::UNDEFINED {
         return SurfaceFormatKHR {
-            format: Format::B8G8R8A8_UNORM,
+            format: vk::Format::B8G8R8A8_UNORM,
             color_space: ColorSpaceKHR::SRGB_NONLINEAR,
         };
     }
     *available_formats
         .iter()
         .find(|format| {
-            format.format == Format::B8G8R8A8_UNORM
+            format.format == vk::Format::B8G8R8A8_UNORM
                 && format.color_space == ColorSpaceKHR::SRGB_NONLINEAR
         })
         .unwrap_or(&available_formats[0])
