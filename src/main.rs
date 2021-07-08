@@ -100,23 +100,27 @@ fn main() -> anyhow::Result<()> {
         &instance,
         &surface,
         surface_khr,
-        physical_device,
+        &physical_device,
         &logical_device,
         image_sharing_mode,
         &queue_family_indices,
     )?;
 
-    trace!("Event loop started");
+    trace!("Event loop was started");
     while !window.should_close() {
         glfw.poll_events();
         for (_, event) in glfw::flush_messages(&event_receiver) {
             match event {
                 glfw::WindowEvent::Key(glfw::Key::Escape, _, glfw::Action::Press, _)
-                | glfw::WindowEvent::Close => window.set_should_close(true),
+                | glfw::WindowEvent::Close => {
+                    window.set_should_close(true);
+                    trace!("Window closing");
+                }
                 _ => (),
             }
         }
     }
+    trace!("Event loop was ended");
 
     Ok(())
 }

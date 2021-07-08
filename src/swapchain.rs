@@ -2,38 +2,39 @@ use super::window;
 use anyhow::Context;
 use ash::{
     extensions::khr::{Surface, Swapchain},
+    version::DeviceV1_0,
     vk::{
-        self, ColorSpaceKHR, CompositeAlphaFlagsKHR, Extent2D, ImageUsageFlags, PhysicalDevice,
-        PresentModeKHR, SharingMode, SurfaceCapabilitiesKHR, SurfaceFormatKHR, SurfaceKHR,
-        SwapchainCreateInfoKHR, SwapchainKHR,
+        self, ColorSpaceKHR, Extent2D, PhysicalDevice, PresentModeKHR,
+        SurfaceFormatKHR,
     },
     Device, Instance,
 };
 
-pub struct SwapchainWrapper {
+pub struct SwapchainWrapper<'a> {
+    logical_device: &'a Device,
     swapchain_raw: Swapchain,
-    swapchain_khr: SwapchainKHR,
-    _images: Vec<vk::Image>,
+    swapchain_khr: vk::SwapchainKHR,
+    image_views: Vec<vk::ImageView>,
 }
 
-impl SwapchainWrapper {
+impl<'a> SwapchainWrapper<'a> {
     pub fn new(
         instance: &Instance,
         surface: &Surface,
-        surface_khr: SurfaceKHR,
-        physical_device: PhysicalDevice,
-        logical_device: &Device,
-        image_sharing_mode: SharingMode,
+        surface_khr: vk::SurfaceKHR,
+        physical_device: &PhysicalDevice,
+        logical_device: &'a Device,
+        image_sharing_mode: vk::SharingMode,
         queue_family_indices: &[u32],
-    ) -> anyhow::Result<Self> {
+    ) -> anyhow::Result<SwapchainWrapper<'a>> {
         let capabilities = unsafe {
-            surface.get_physical_device_surface_capabilities(physical_device, surface_khr)
+            surface.get_physical_device_surface_capabilities(*physical_device, surface_khr)
         }
         .context("Failed to get surface capabilities of physical device")?;
-        let extent2d = decide_swapchain_extent(capabilities);
+        let image_extent = decide_swapchain_extent(capabilities);
         debug!(
             "Window surface extent: {:?} x {:?}",
-            extent2d.width, extent2d.height
+            image_extent.width, image_extent.height
         );
 
         let image_count = {
@@ -47,7 +48,7 @@ impl SwapchainWrapper {
         };
 
         let available_formats =
-            unsafe { surface.get_physical_device_surface_formats(physical_device, surface_khr) }
+            unsafe { surface.get_physical_device_surface_formats(*physical_device, surface_khr) }
                 .context("Failed to get surface formats of physical device")?;
         trace!("Available pixel formats:");
         for f in available_formats.iter() {
@@ -63,7 +64,7 @@ impl SwapchainWrapper {
         debug!("Color space: {:?}", format.color_space);
 
         let available_present_modes = unsafe {
-            surface.get_physical_device_surface_present_modes(physical_device, surface_khr)
+            surface.get_physical_device_surface_present_modes(*physical_device, surface_khr)
         }
         .context("Failed to get present modes of physical device")?;
         trace!(
@@ -78,18 +79,18 @@ impl SwapchainWrapper {
         let present_mode = choose_swapchain_surface_present_mode(&available_present_modes);
         debug!("Present mode: {:?}", present_mode);
 
-        let create_info = SwapchainCreateInfoKHR::builder()
+        let create_info = vk::SwapchainCreateInfoKHR::builder()
             .surface(surface_khr)
             .min_image_count(image_count)
             .image_format(format.format)
             .image_color_space(format.color_space)
-            .image_extent(extent2d)
+            .image_extent(image_extent)
             .image_array_layers(1)
-            .image_usage(ImageUsageFlags::COLOR_ATTACHMENT)
+            .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
             .image_sharing_mode(image_sharing_mode)
             .queue_family_indices(&queue_family_indices)
             .pre_transform(capabilities.current_transform)
-            .composite_alpha(CompositeAlphaFlagsKHR::OPAQUE)
+            .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
             .present_mode(present_mode)
             .clipped(true)
             .build();
@@ -102,16 +103,44 @@ impl SwapchainWrapper {
         let images = unsafe { swapchain_raw.get_swapchain_images(swapchain_khr) }
             .context("Failed to get swapchain images")?;
 
+        // パイプラインからイメージを利用するために必要
+        let image_views = images
+            .into_iter()
+            .map(|image| {
+                let image_view_create_info = vk::ImageViewCreateInfo::builder()
+                    .image(image)
+                    .view_type(vk::ImageViewType::TYPE_2D)
+                    .format(format.format)
+                    // 画像の用途や、画像のどの部分にアクセスするかを指定する
+                    // ミップマッピングレベルや複数レイヤを使用せず、カラーターゲットとして使用する
+                    .subresource_range(vk::ImageSubresourceRange {
+                        aspect_mask: vk::ImageAspectFlags::COLOR,
+                        base_mip_level: 0,
+                        level_count: 1,
+                        base_array_layer: 0,
+                        layer_count: 1,
+                    })
+                    .build();
+                unsafe { logical_device.create_image_view(&image_view_create_info, None) }.unwrap()
+            })
+            .collect::<Vec<_>>();
+        debug!("The number of image views: {}", image_views.len());
+
         Ok(SwapchainWrapper {
+            logical_device,
             swapchain_raw,
             swapchain_khr,
-            _images: images,
+            image_views,
         })
     }
 }
 
-impl Drop for SwapchainWrapper {
+impl<'a> Drop for SwapchainWrapper<'a> {
     fn drop(&mut self) {
+        for image_view in self.image_views.iter() {
+            unsafe { self.logical_device.destroy_image_view(*image_view, None) }
+        }
+        trace!("All image views included in swapchain were destroyed");
         unsafe {
             self.swapchain_raw
                 .destroy_swapchain(self.swapchain_khr, None)
@@ -120,7 +149,7 @@ impl Drop for SwapchainWrapper {
     }
 }
 
-fn decide_swapchain_extent(capabilities: SurfaceCapabilitiesKHR) -> Extent2D {
+fn decide_swapchain_extent(capabilities: vk::SurfaceCapabilitiesKHR) -> Extent2D {
     if capabilities.current_extent.width != std::u32::MAX {
         return capabilities.current_extent;
     }
