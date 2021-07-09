@@ -130,6 +130,12 @@ impl<'a> SwapchainWrapper<'a> {
             image_views,
         })
     }
+
+    pub fn get_image_count(&self) -> anyhow::Result<usize> {
+        unsafe { self.swapchain_raw.get_swapchain_images(self.swapchain_khr) }
+            .context("Failed to get swapchain images ")
+            .map(|imgs| imgs.len())
+    }
 }
 
 impl<'a> Drop for SwapchainWrapper<'a> {

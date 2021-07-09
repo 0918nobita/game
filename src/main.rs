@@ -96,7 +96,7 @@ fn main() -> anyhow::Result<()> {
     };
     debug!("Image sharing mode: {:?}", image_sharing_mode);
 
-    let _swapchain = SwapchainWrapper::new(
+    let swapchain = SwapchainWrapper::new(
         &instance,
         &surface,
         surface_khr,
@@ -106,7 +106,7 @@ fn main() -> anyhow::Result<()> {
         &queue_family_indices,
     )?;
 
-    create_pipeline(&logical_device)?;
+    create_pipeline(&logical_device, &swapchain)?;
 
     trace!("Event loop was started");
     while !window.should_close() {

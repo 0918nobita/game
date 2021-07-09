@@ -2,6 +2,8 @@
 
 #[macro_use]
 extern crate log;
+#[macro_use]
+extern crate scopeguard;
 
 pub mod device;
 pub mod instance;
