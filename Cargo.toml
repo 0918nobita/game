@@ -21,3 +21,7 @@ features = ["vulkan"]
 [features]
 default = ["validation_layers"]
 validation_layers = []
+
+[profile.release]
+codegen-units = 1
+panic = "abort"
