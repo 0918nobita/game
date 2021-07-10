@@ -1,5 +1,5 @@
 use anyhow::Context;
-use ash::{Instance, version::InstanceV1_0, vk::PhysicalDevice};
+use ash::{version::InstanceV1_0, vk::PhysicalDevice, Instance};
 
 pub struct PhysicalDeviceWrapper {
     physical_device_raw: PhysicalDevice,
