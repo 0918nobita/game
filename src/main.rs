@@ -1,18 +1,14 @@
 extern crate game;
 
 use ash::Entry;
-use game::{instance::ManagedInstance, managed_glfw::ManagedGlfw};
+use game::{glfw_wrapper::GlfwWrapper, instance::ManagedInstance};
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
     let entry = unsafe { Entry::new() }?;
-    let glfw = ManagedGlfw::new()?;
-    let instance = ManagedInstance::new(
-        &entry,
-        &glfw.get_required_instance_extensions()?,
-        cfg!(feature = "validation_layers"),
-    )?;
-    let _window = glfw.create_window(&instance, 500, 300, "Game")?;
+    let glfw = GlfwWrapper::new()?;
+    let instance = ManagedInstance::new(&entry, &glfw, cfg!(feature = "validation_layers"))?;
+    let _window = instance.create_window(500, 300, "Game")?;
     let _physical_device = instance.find_physical_device(|_device| true)?;
     Ok(())
 }

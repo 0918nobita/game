@@ -5,6 +5,5 @@ extern crate anyhow;
 #[macro_use]
 extern crate log;
 
+pub mod glfw_wrapper;
 pub mod instance;
-pub mod managed_glfw;
-mod window;

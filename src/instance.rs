@@ -1,20 +1,24 @@
 //! Vulkan インスタンス関連
 
-use std::{ffi::CString, os::raw::c_char};
+mod window;
 
+use crate::glfw_wrapper::GlfwWrapper;
 use anyhow::Context;
 use ash::{
     extensions::khr::{Surface, Swapchain},
     version::{EntryV1_0, InstanceV1_0},
-    vk::{make_version, ApplicationInfo, Handle, InstanceCreateInfo, PhysicalDevice},
+    vk::{make_version, ApplicationInfo, Handle, InstanceCreateInfo, PhysicalDevice, SurfaceKHR},
     Entry, Instance,
 };
 use once_cell::sync::Lazy;
 use std::ffi::CStr;
+use std::{ffi::CString, os::raw::c_char};
+use window::ManagedWindow;
 
 /// 自動で解放される、Vulkan インスタンスのラッパー
 pub struct ManagedInstance<'a> {
     entry: &'a Entry,
+    glfw: &'a GlfwWrapper,
     instance_raw: Instance,
 }
 
@@ -24,7 +28,7 @@ static VALIDATION_LAYERS: Lazy<Vec<CString>> =
 impl<'a> ManagedInstance<'a> {
     pub fn new(
         entry: &'a Entry,
-        extension_names: &[String],
+        glfw: &'a GlfwWrapper,
         with_validation_layers: bool,
     ) -> anyhow::Result<ManagedInstance<'a>> {
         let application_name = CString::new("Game")?;
@@ -46,7 +50,8 @@ impl<'a> ManagedInstance<'a> {
             Vec::new()
         };
 
-        let enabled_extension_names: Vec<CString> = extension_names
+        let enabled_extension_names: Vec<CString> = glfw
+            .get_required_instance_extensions()?
             .iter()
             .map(|item| CString::new(item.as_str()).unwrap())
             .collect();
@@ -65,12 +70,9 @@ impl<'a> ManagedInstance<'a> {
 
         Ok(ManagedInstance {
             entry,
+            glfw,
             instance_raw,
         })
-    }
-
-    pub fn create_surface(&self) -> Surface {
-        Surface::new(self.entry, &self.instance_raw)
     }
 
     pub fn find_physical_device<P>(&self, predicate: P) -> anyhow::Result<PhysicalDevice>
@@ -85,8 +87,28 @@ impl<'a> ManagedInstance<'a> {
             .context("Failed to find suitable physical device")
     }
 
-    pub fn get_raw_vk_instance(&self) -> vk_sys::Instance {
-        self.instance_raw.handle().as_raw() as vk_sys::Instance
+    pub fn create_window<Title>(
+        &self,
+        width: u32,
+        height: u32,
+        title: Title,
+    ) -> anyhow::Result<ManagedWindow>
+    where
+        Title: ToString,
+    {
+        let window_raw = self.glfw.create_window_raw(width, height, title)?;
+
+        let surface_loader = Surface::new(self.entry, &self.instance_raw);
+
+        let mut surface_raw = 0;
+        window_raw.create_window_surface(
+            self.instance_raw.handle().as_raw() as vk_sys::Instance,
+            std::ptr::null(),
+            &mut surface_raw,
+        );
+        let surface = SurfaceKHR::from_raw(surface_raw);
+
+        Ok(ManagedWindow::new(window_raw, surface_loader, surface))
     }
 }
 

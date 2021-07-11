@@ -1,10 +1,4 @@
-//! GLFW ウィンドウ関連
-
-use crate::instance::ManagedInstance;
-use ash::{
-    extensions::khr::Surface,
-    vk::{Handle, SurfaceKHR},
-};
+use ash::{extensions::khr::Surface, vk::SurfaceKHR};
 use glfw::Window;
 
 /// 自動で解放される、GLFW ウィンドウとそのサーフェスのラッパー
@@ -15,18 +9,8 @@ pub struct ManagedWindow {
 }
 
 impl ManagedWindow {
-    pub fn new(mut window_raw: Window, instance: &ManagedInstance) -> Self {
+    pub fn new(mut window_raw: Window, surface_loader: Surface, surface: SurfaceKHR) -> Self {
         window_raw.set_key_polling(true);
-
-        let surface_loader = instance.create_surface();
-
-        let mut surface_raw = 0;
-        window_raw.create_window_surface(
-            instance.get_raw_vk_instance(),
-            std::ptr::null(),
-            &mut surface_raw,
-        );
-        let surface = SurfaceKHR::from_raw(surface_raw);
 
         ManagedWindow {
             _window_raw: window_raw,
@@ -36,7 +20,7 @@ impl ManagedWindow {
     }
 }
 
-impl<'a> Drop for ManagedWindow {
+impl Drop for ManagedWindow {
     fn drop(&mut self) {
         unsafe { self.surface_loader.destroy_surface(self.surface, None) };
         trace!("SurfaceKHR was destroyed");
