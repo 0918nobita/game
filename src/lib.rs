@@ -7,5 +7,4 @@ extern crate log;
 
 pub mod instance;
 pub mod managed_glfw;
-mod physical_device;
 mod window;
