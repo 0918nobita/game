@@ -89,3 +89,11 @@ cargo fmt
 ```bash
 cargo doc -p game --document-private-items --open
 ```
+
+## 参考文献
+
+- [初めてのvulkanプログラム第１章 ②Vulkan プログラムでの処理の流れ](https://qiita.com/tositada_nakada/items/a2522fa249c61ef3b7de) tositada_nakada, 2019
+- [Vulkan Programming Vol.1](https://booth.pm/ja/items/1286100) すらりんラボ, 2019
+- [Vulkan Tutorial](https://vulkan-tutorial.com/)
+- [vulkan_samples_2019_rust](https://github.com/aosoft/vulkan_samples_2019_rust) aosoft, 2019
+- [vulkan-triangle-rs](https://github.com/adrien-ben/vulkan-triangle-rs) adrien-ben, 2021
