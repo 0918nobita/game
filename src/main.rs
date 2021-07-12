@@ -8,7 +8,7 @@ fn main() -> anyhow::Result<()> {
     let entry = unsafe { Entry::new() }?;
     let glfw = GlfwWrapper::new()?;
     let instance = ManagedInstance::new(&entry, &glfw, cfg!(feature = "validation_layers"))?;
-    let _window = instance.create_window(500, 300, "Game")?;
-    let _physical_device = instance.find_physical_device(|_device| true)?;
+    let window = instance.create_window(500, 300, "Game")?;
+    let _physical_device = instance.find_physical_device(&window)?;
     Ok(())
 }

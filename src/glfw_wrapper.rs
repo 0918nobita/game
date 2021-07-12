@@ -15,8 +15,8 @@ impl GlfwWrapper {
         Ok(GlfwWrapper { glfw_raw })
     }
 
-    pub fn create_window_raw<'a, Title>(
-        &'a self,
+    pub fn create_window_raw<Title>(
+        &self,
         width: u32,
         height: u32,
         title: Title,

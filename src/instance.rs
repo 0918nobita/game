@@ -7,7 +7,10 @@ use anyhow::Context;
 use ash::{
     extensions::khr::{Surface, Swapchain},
     version::{EntryV1_0, InstanceV1_0},
-    vk::{make_version, ApplicationInfo, Handle, InstanceCreateInfo, PhysicalDevice, SurfaceKHR},
+    vk::{
+        make_version, ApplicationInfo, Handle, InstanceCreateInfo, PhysicalDevice, QueueFlags,
+        SurfaceKHR,
+    },
     Entry, Instance,
 };
 use once_cell::sync::Lazy;
@@ -75,15 +78,29 @@ impl<'a> ManagedInstance<'a> {
         })
     }
 
-    pub fn find_physical_device<P>(&self, predicate: P) -> anyhow::Result<PhysicalDevice>
-    where
-        P: FnMut(&PhysicalDevice) -> bool,
-    {
+    pub fn find_physical_device(&self, window: &ManagedWindow) -> anyhow::Result<PhysicalDevice> {
         unsafe { self.instance_raw.enumerate_physical_devices() }
             .context("Failed to enumerate physical devices")?
             .into_iter()
-            .filter(|physical_device| check_swapchain_support(&self.instance_raw, physical_device))
-            .find(predicate)
+            .find(|physical_device| {
+                let queue_families = unsafe {
+                    self.instance_raw
+                        .get_physical_device_queue_family_properties(*physical_device)
+                };
+                check_swapchain_support(&self.instance_raw, physical_device)
+                    && queue_families
+                        .iter()
+                        .any(|queue_family| queue_family.queue_flags.contains(QueueFlags::GRAPHICS))
+                    && queue_families
+                        .iter()
+                        .enumerate()
+                        .any(|(queue_family_index, _)| {
+                            window.get_physical_device_surface_support(
+                                &physical_device,
+                                queue_family_index as u32,
+                            )
+                        })
+            })
             .context("Failed to find suitable physical device")
     }
 

@@ -1,4 +1,7 @@
-use ash::{extensions::khr::Surface, vk::SurfaceKHR};
+use ash::{
+    extensions::khr::Surface,
+    vk::{PhysicalDevice, SurfaceKHR},
+};
 use glfw::Window;
 
 /// 自動で解放される、GLFW ウィンドウとそのサーフェスのラッパー
@@ -17,6 +20,21 @@ impl ManagedWindow {
             surface_loader,
             surface,
         }
+    }
+
+    pub fn get_physical_device_surface_support(
+        &self,
+        physical_device: &PhysicalDevice,
+        queue_family_index: u32,
+    ) -> bool {
+        unsafe {
+            self.surface_loader.get_physical_device_surface_support(
+                *physical_device,
+                queue_family_index,
+                self.surface,
+            )
+        }
+        .unwrap_or(false)
     }
 }
 
