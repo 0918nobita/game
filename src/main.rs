@@ -9,6 +9,6 @@ fn main() -> anyhow::Result<()> {
     let glfw = GlfwWrapper::new()?;
     let instance = ManagedInstance::new(&entry, &glfw, cfg!(feature = "validation_layers"))?;
     let window = instance.create_window(500, 300, "Game")?;
-    let _physical_device = instance.find_physical_device(&window)?;
+    let _logical_device = instance.create_logical_device(&window)?;
     Ok(())
 }

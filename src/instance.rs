@@ -1,5 +1,6 @@
 //! Vulkan インスタンス関連
 
+mod logical_device;
 mod window;
 
 use crate::glfw_wrapper::GlfwWrapper;
@@ -8,8 +9,8 @@ use ash::{
     extensions::khr::{Surface, Swapchain},
     version::{EntryV1_0, InstanceV1_0},
     vk::{
-        make_version, ApplicationInfo, Handle, InstanceCreateInfo, PhysicalDevice, QueueFlags,
-        SurfaceKHR,
+        make_version, ApplicationInfo, DeviceCreateInfo, DeviceQueueCreateInfo, Handle,
+        InstanceCreateInfo, PhysicalDevice, PhysicalDeviceFeatures, QueueFlags, SurfaceKHR,
     },
     Entry, Instance,
 };
@@ -17,6 +18,8 @@ use once_cell::sync::Lazy;
 use std::ffi::CStr;
 use std::{ffi::CString, os::raw::c_char};
 use window::ManagedWindow;
+
+use self::logical_device::ManagedLogicalDevice;
 
 /// 自動で解放される、Vulkan インスタンスのラッパー
 pub struct ManagedInstance<'a> {
@@ -78,32 +81,6 @@ impl<'a> ManagedInstance<'a> {
         })
     }
 
-    pub fn find_physical_device(&self, window: &ManagedWindow) -> anyhow::Result<PhysicalDevice> {
-        unsafe { self.instance_raw.enumerate_physical_devices() }
-            .context("Failed to enumerate physical devices")?
-            .into_iter()
-            .find(|physical_device| {
-                let queue_families = unsafe {
-                    self.instance_raw
-                        .get_physical_device_queue_family_properties(*physical_device)
-                };
-                check_swapchain_support(&self.instance_raw, physical_device)
-                    && queue_families
-                        .iter()
-                        .any(|queue_family| queue_family.queue_flags.contains(QueueFlags::GRAPHICS))
-                    && queue_families
-                        .iter()
-                        .enumerate()
-                        .any(|(queue_family_index, _)| {
-                            window.get_physical_device_surface_support(
-                                &physical_device,
-                                queue_family_index as u32,
-                            )
-                        })
-            })
-            .context("Failed to find suitable physical device")
-    }
-
     pub fn create_window<Title>(
         &self,
         width: u32,
@@ -126,6 +103,78 @@ impl<'a> ManagedInstance<'a> {
         let surface = SurfaceKHR::from_raw(surface_raw);
 
         Ok(ManagedWindow::new(window_raw, surface_loader, surface))
+    }
+
+    pub fn create_logical_device(
+        &self,
+        window: &ManagedWindow,
+    ) -> anyhow::Result<ManagedLogicalDevice> {
+        let (physical_device, mut queue_indices) =
+            unsafe { self.instance_raw.enumerate_physical_devices() }
+                .context("Failed to enumerate physical deviuces")?
+                .into_iter()
+                .find_map(|physical_device| {
+                    let queue_families = unsafe {
+                        self.instance_raw
+                            .get_physical_device_queue_family_properties(physical_device)
+                    };
+                    if !check_swapchain_support(&self.instance_raw, &physical_device) {
+                        return None;
+                    }
+                    let graphics_queue_index = queue_families.iter().enumerate().find_map(
+                        |(queue_family_index, queue_family)| {
+                            queue_family
+                                .queue_flags
+                                .contains(QueueFlags::GRAPHICS)
+                                .then(|| queue_family_index as u32)
+                        },
+                    )?;
+                    let presentation_queue_index =
+                        queue_families
+                            .iter()
+                            .enumerate()
+                            .find_map(|(queue_family_index, _)| {
+                                let queue_family_index = queue_family_index as u32;
+                                window
+                                    .get_physical_device_surface_support(
+                                        &physical_device,
+                                        queue_family_index,
+                                    )
+                                    .then(|| queue_family_index)
+                            })?;
+                    Some((
+                        physical_device,
+                        vec![graphics_queue_index, presentation_queue_index],
+                    ))
+                })
+                .context("No suitable physical device")?;
+        queue_indices.dedup();
+        let queue_create_infos: Vec<DeviceQueueCreateInfo> = queue_indices
+            .iter()
+            .map(|index| {
+                DeviceQueueCreateInfo::builder()
+                    .queue_family_index(*index)
+                    .queue_priorities(&[1.0f32])
+                    .build()
+            })
+            .collect();
+        let device_features = PhysicalDeviceFeatures::builder().build();
+        let layer_name_ptrs: Vec<*const c_char> = (*VALIDATION_LAYERS)
+            .iter()
+            .map(|name| name.as_ptr())
+            .collect();
+        let device_create_info = DeviceCreateInfo::builder()
+            .queue_create_infos(&queue_create_infos)
+            .enabled_extension_names(&[Swapchain::name().as_ptr()])
+            .enabled_features(&device_features)
+            .enabled_layer_names(&layer_name_ptrs)
+            .build();
+        let device_raw = unsafe {
+            self.instance_raw
+                .create_device(physical_device, &device_create_info, None)
+        }
+        .context("Failed to create logical device")?;
+        Ok(ManagedLogicalDevice::new(device_raw))
     }
 }
 
