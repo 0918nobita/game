@@ -52,7 +52,7 @@ impl ManagedLogicalDevice {
             .mip_levels(1)
             .array_layers(1)
             .format(Format::R8G8B8A8_UNORM)
-            .tiling(ImageTiling::LINEAR)
+            .tiling(ImageTiling::OPTIMAL)
             .initial_layout(ImageLayout::UNDEFINED)
             .usage(ImageUsageFlags::COLOR_ATTACHMENT)
             .sharing_mode(SharingMode::EXCLUSIVE)
