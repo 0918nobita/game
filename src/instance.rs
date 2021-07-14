@@ -107,7 +107,7 @@ impl<'a> ManagedInstance<'a> {
 
     pub fn create_logical_device(
         &self,
-        window: &ManagedWindow,
+        window: Option<&ManagedWindow>,
     ) -> anyhow::Result<ManagedLogicalDevice> {
         let (physical_device, queue_indices) =
             unsafe { self.instance_raw.enumerate_physical_devices() }
@@ -157,7 +157,7 @@ impl Drop for ManagedInstance<'_> {
 fn try_get_queue_family_indices(
     physical_device: PhysicalDevice,
     instance_raw: &Instance,
-    window: &ManagedWindow,
+    window: Option<&ManagedWindow>,
 ) -> Option<(PhysicalDevice, Vec<u32>)> {
     let queue_families =
         unsafe { instance_raw.get_physical_device_queue_family_properties(physical_device) };
@@ -165,11 +165,15 @@ fn try_get_queue_family_indices(
         return None;
     }
     let graphics_queue_index = find_graphics_queue_family_index(&queue_families)?;
-    let presentation_queue_index =
-        find_presentation_queue_family_index(&queue_families, &physical_device, window)?;
-    let mut queue_indices = vec![graphics_queue_index, presentation_queue_index];
-    queue_indices.dedup();
-    Some((physical_device, queue_indices))
+    if let Some(window) = window {
+        let presentation_queue_index =
+            find_presentation_queue_family_index(&queue_families, &physical_device, window)?;
+        let mut queue_indices = vec![graphics_queue_index, presentation_queue_index];
+        queue_indices.dedup();
+        Some((physical_device, queue_indices))
+    } else {
+        Some((physical_device, vec![graphics_queue_index]))
+    }
 }
 
 fn find_graphics_queue_family_index(queue_families: &[QueueFamilyProperties]) -> Option<u32> {

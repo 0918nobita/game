@@ -8,8 +8,9 @@ fn main() -> anyhow::Result<()> {
     let entry = unsafe { Entry::new() }?;
     let glfw = GlfwWrapper::new()?;
     let instance = ManagedInstance::new(&entry, &glfw, cfg!(feature = "validation_layers"))?;
-    let window = instance.create_window(500, 300, "Game")?;
-    let logical_device = instance.create_logical_device(&window)?;
+    // let window = instance.create_window(500, 300, "Game")?;
+    // let logical_device = instance.create_logical_device(Some(&window))?;
+    let logical_device = instance.create_logical_device(None)?;
     let command_pool = logical_device.create_command_pool()?;
     let graphics_queue = logical_device.get_graphics_queue();
     let command_buffer = command_pool.allocate_command_buffer()?;
