@@ -3,6 +3,7 @@
 mod logical_device;
 mod window;
 
+use self::logical_device::ManagedLogicalDevice;
 use crate::glfw_wrapper::GlfwWrapper;
 use anyhow::Context;
 use ash::{
@@ -19,8 +20,6 @@ use once_cell::sync::Lazy;
 use std::ffi::CStr;
 use std::{ffi::CString, os::raw::c_char};
 use window::ManagedWindow;
-
-use self::logical_device::ManagedLogicalDevice;
 
 /// 自動で解放される、Vulkan インスタンスのラッパー
 pub struct ManagedInstance<'a> {
@@ -144,7 +143,7 @@ impl<'a> ManagedInstance<'a> {
                 .create_device(physical_device, &device_create_info, None)
         }
         .context("Failed to create logical device")?;
-        Ok(ManagedLogicalDevice::new(device_raw))
+        Ok(ManagedLogicalDevice::new(device_raw, queue_indices))
     }
 }
 
