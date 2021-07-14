@@ -147,7 +147,7 @@ impl<'a> ManagedInstance<'a> {
     }
 }
 
-impl<'a> Drop for ManagedInstance<'a> {
+impl Drop for ManagedInstance<'_> {
     fn drop(&mut self) {
         unsafe { self.instance_raw.destroy_instance(None) }
         trace!("Vulkan instance was destroyed")

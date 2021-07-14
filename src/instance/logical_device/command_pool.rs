@@ -1,4 +1,4 @@
-use anyhow::Context;
+use super::command_buffer::ManagedCommandBuffer;
 use ash::{
     version::DeviceV1_0,
     vk::{CommandBufferAllocateInfo, CommandBufferLevel, CommandPool, CommandPoolCreateInfo},
@@ -25,20 +25,22 @@ impl<'a> ManagedCommandPool<'a> {
         })
     }
 
-    pub fn allocate_command_buffer(&self) -> anyhow::Result<()> {
+    pub fn allocate_command_buffer(&self) -> anyhow::Result<ManagedCommandBuffer> {
         let create_info = CommandBufferAllocateInfo::builder()
             .command_pool(self.command_pool_raw)
             .command_buffer_count(1)
             .level(CommandBufferLevel::PRIMARY)
             .build();
-        let _command_buffer = unsafe { self.device_raw.allocate_command_buffers(&create_info) }?
-            .first()
-            .context("Failed to get alloated command buffer")?;
-        Ok(())
+        let command_buffer = unsafe { self.device_raw.allocate_command_buffers(&create_info) }?[0];
+        Ok(ManagedCommandBuffer::new(
+            self.device_raw,
+            &self.command_pool_raw,
+            command_buffer,
+        ))
     }
 }
 
-impl<'a> Drop for ManagedCommandPool<'a> {
+impl Drop for ManagedCommandPool<'_> {
     fn drop(&mut self) {
         unsafe {
             self.device_raw

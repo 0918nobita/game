@@ -1,7 +1,8 @@
+mod command_buffer;
 mod command_pool;
 
 use self::command_pool::ManagedCommandPool;
-use ash::{version::DeviceV1_0, Device};
+use ash::{version::DeviceV1_0, vk::Queue, Device};
 
 pub struct ManagedLogicalDevice {
     device_raw: Device,
@@ -17,12 +18,16 @@ impl ManagedLogicalDevice {
         }
     }
 
-    pub fn create_command_pool(&self) -> anyhow::Result<ManagedCommandPool> {
+    pub fn get_graphics_queue(&self) -> Queue {
         let graphics_queue_family_index = self.queue_indices[0];
-        let _graphics_queue = unsafe {
+        unsafe {
             self.device_raw
                 .get_device_queue(graphics_queue_family_index, 0)
-        };
+        }
+    }
+
+    pub fn create_command_pool(&self) -> anyhow::Result<ManagedCommandPool> {
+        let graphics_queue_family_index = self.queue_indices[0];
         ManagedCommandPool::new(&self.device_raw, graphics_queue_family_index)
     }
 }

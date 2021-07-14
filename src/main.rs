@@ -11,6 +11,8 @@ fn main() -> anyhow::Result<()> {
     let window = instance.create_window(500, 300, "Game")?;
     let logical_device = instance.create_logical_device(&window)?;
     let command_pool = logical_device.create_command_pool()?;
-    command_pool.allocate_command_buffer()?;
+    let graphics_queue = logical_device.get_graphics_queue();
+    let command_buffer = command_pool.allocate_command_buffer()?;
+    command_buffer.submit_empty_cmd(&graphics_queue)?;
     Ok(())
 }
