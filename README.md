@@ -97,3 +97,4 @@ cargo doc -p game --document-private-items --open
 - [Vulkan Tutorial](https://vulkan-tutorial.com/)
 - [vulkan_samples_2019_rust](https://github.com/aosoft/vulkan_samples_2019_rust) aosoft, 2019
 - [vulkan-triangle-rs](https://github.com/adrien-ben/vulkan-triangle-rs) adrien-ben, 2021
+- [やっていくVulkan入門](https://foolslab.net/do/vulkan)
