@@ -10,7 +10,8 @@ use ash::{
     version::{EntryV1_0, InstanceV1_0},
     vk::{
         make_version, ApplicationInfo, DeviceCreateInfo, DeviceQueueCreateInfo, Handle,
-        InstanceCreateInfo, PhysicalDevice, PhysicalDeviceFeatures, QueueFlags, SurfaceKHR,
+        InstanceCreateInfo, PhysicalDevice, PhysicalDeviceFeatures, QueueFamilyProperties,
+        QueueFlags, SurfaceKHR,
     },
     Entry, Instance,
 };
@@ -109,47 +110,16 @@ impl<'a> ManagedInstance<'a> {
         &self,
         window: &ManagedWindow,
     ) -> anyhow::Result<ManagedLogicalDevice> {
-        let (physical_device, mut queue_indices) =
+        let (physical_device, queue_indices) =
             unsafe { self.instance_raw.enumerate_physical_devices() }
                 .context("Failed to enumerate physical deviuces")?
                 .into_iter()
                 .find_map(|physical_device| {
-                    let queue_families = unsafe {
-                        self.instance_raw
-                            .get_physical_device_queue_family_properties(physical_device)
-                    };
-                    if !check_swapchain_support(&self.instance_raw, &physical_device) {
-                        return None;
-                    }
-                    let graphics_queue_index = queue_families.iter().enumerate().find_map(
-                        |(queue_family_index, queue_family)| {
-                            queue_family
-                                .queue_flags
-                                .contains(QueueFlags::GRAPHICS)
-                                .then(|| queue_family_index as u32)
-                        },
-                    )?;
-                    let presentation_queue_index =
-                        queue_families
-                            .iter()
-                            .enumerate()
-                            .find_map(|(queue_family_index, _)| {
-                                let queue_family_index = queue_family_index as u32;
-                                window
-                                    .get_physical_device_surface_support(
-                                        &physical_device,
-                                        queue_family_index,
-                                    )
-                                    .then(|| queue_family_index)
-                            })?;
-                    Some((
-                        physical_device,
-                        vec![graphics_queue_index, presentation_queue_index],
-                    ))
+                    try_get_queue_family_indices(physical_device, &self.instance_raw, window)
                 })
                 .context("No suitable physical device")?;
-        queue_indices.dedup();
-        let queue_create_infos: Vec<DeviceQueueCreateInfo> = queue_indices
+
+        let queue_create_infos = queue_indices
             .iter()
             .map(|index| {
                 DeviceQueueCreateInfo::builder()
@@ -157,7 +127,7 @@ impl<'a> ManagedInstance<'a> {
                     .queue_priorities(&[1.0f32])
                     .build()
             })
-            .collect();
+            .collect::<Vec<_>>();
         let device_features = PhysicalDeviceFeatures::builder().build();
         let layer_name_ptrs: Vec<*const c_char> = (*VALIDATION_LAYERS)
             .iter()
@@ -185,6 +155,36 @@ impl<'a> Drop for ManagedInstance<'a> {
     }
 }
 
+fn try_get_queue_family_indices(
+    physical_device: PhysicalDevice,
+    instance_raw: &Instance,
+    window: &ManagedWindow,
+) -> Option<(PhysicalDevice, Vec<u32>)> {
+    let queue_families =
+        unsafe { instance_raw.get_physical_device_queue_family_properties(physical_device) };
+    if !check_swapchain_support(instance_raw, &physical_device) {
+        return None;
+    }
+    let graphics_queue_index = find_graphics_queue_family_index(&queue_families)?;
+    let presentation_queue_index =
+        find_presentation_queue_family_index(&queue_families, &physical_device, window)?;
+    let mut queue_indices = vec![graphics_queue_index, presentation_queue_index];
+    queue_indices.dedup();
+    Some((physical_device, queue_indices))
+}
+
+fn find_graphics_queue_family_index(queue_families: &[QueueFamilyProperties]) -> Option<u32> {
+    queue_families
+        .iter()
+        .enumerate()
+        .find_map(|(queue_family_index, queue_family)| {
+            queue_family
+                .queue_flags
+                .contains(QueueFlags::GRAPHICS)
+                .then(|| queue_family_index as u32)
+        })
+}
+
 fn check_swapchain_support(instance_raw: &Instance, physical_device: &PhysicalDevice) -> bool {
     unsafe { instance_raw.enumerate_device_extension_properties(*physical_device) }
         .map(|exts| {
@@ -193,4 +193,20 @@ fn check_swapchain_support(instance_raw: &Instance, physical_device: &PhysicalDe
             )
         })
         .unwrap_or(false)
+}
+
+fn find_presentation_queue_family_index(
+    queue_families: &[QueueFamilyProperties],
+    physical_device: &PhysicalDevice,
+    window: &ManagedWindow,
+) -> Option<u32> {
+    queue_families
+        .iter()
+        .enumerate()
+        .find_map(|(queue_family_index, _)| {
+            let queue_family_index = queue_family_index as u32;
+            window
+                .get_physical_device_surface_support(&physical_device, queue_family_index)
+                .then(|| queue_family_index)
+        })
 }
