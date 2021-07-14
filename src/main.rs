@@ -14,6 +14,7 @@ fn main() -> anyhow::Result<()> {
     let command_pool = logical_device.create_command_pool()?;
     let graphics_queue = logical_device.get_graphics_queue();
     let command_buffer = command_pool.allocate_command_buffer()?;
+    logical_device.create_image(500, 300)?;
     command_buffer.submit_empty_cmd(&graphics_queue)?;
     Ok(())
 }

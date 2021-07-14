@@ -47,5 +47,6 @@ impl Drop for ManagedCommandBuffer<'_> {
             self.device_raw
                 .free_command_buffers(*self.command_pool_raw, &[self.command_buffer_raw])
         }
+        trace!("CommandBuffer was destroyed")
     }
 }
