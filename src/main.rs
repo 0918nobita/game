@@ -10,6 +10,7 @@ fn main() -> anyhow::Result<()> {
     let instance = ManagedInstance::new(&entry, &glfw, cfg!(feature = "validation_layers"))?;
     let window = instance.create_window(500, 300, "Game")?;
     let logical_device = instance.create_logical_device(&window)?;
-    logical_device.create_command_pool()?;
+    let command_pool = logical_device.create_command_pool()?;
+    command_pool.allocate_command_buffer()?;
     Ok(())
 }

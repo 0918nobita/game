@@ -17,14 +17,13 @@ impl ManagedLogicalDevice {
         }
     }
 
-    pub fn create_command_pool(&self) -> anyhow::Result<()> {
+    pub fn create_command_pool(&self) -> anyhow::Result<ManagedCommandPool> {
         let graphics_queue_family_index = self.queue_indices[0];
         let _graphics_queue = unsafe {
             self.device_raw
                 .get_device_queue(graphics_queue_family_index, 0)
         };
-        let _command_pool = ManagedCommandPool::new(&self.device_raw, graphics_queue_family_index);
-        Ok(())
+        ManagedCommandPool::new(&self.device_raw, graphics_queue_family_index)
     }
 }
 
