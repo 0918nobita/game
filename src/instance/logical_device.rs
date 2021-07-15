@@ -1,8 +1,9 @@
 mod command_buffer;
 mod command_pool;
 mod image;
+mod render_pass;
 
-use self::{command_pool::ManagedCommandPool, image::ManagedImage};
+use self::{command_pool::ManagedCommandPool, image::ManagedImage, render_pass::ManagedRenderPass};
 use ash::{
     version::DeviceV1_0,
     vk::{PhysicalDevice, Queue},
@@ -53,6 +54,10 @@ impl<'a> ManagedLogicalDevice<'a> {
             width,
             height,
         )
+    }
+
+    pub fn create_render_pass(&self) -> anyhow::Result<ManagedRenderPass> {
+        ManagedRenderPass::new(&self.device_raw)
     }
 }
 
