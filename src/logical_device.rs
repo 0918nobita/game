@@ -1,13 +1,11 @@
-mod command_buffer;
-mod command_pool;
-mod image;
-mod render_pass;
-
-use self::{command_pool::ManagedCommandPool, image::ManagedImage, render_pass::ManagedRenderPass};
 use ash::{
     version::DeviceV1_0,
     vk::{PhysicalDevice, Queue},
     Device, Instance,
+};
+
+use crate::{
+    command_pool::ManagedCommandPool, image::ManagedImage, render_pass::ManagedRenderPass,
 };
 
 pub struct ManagedLogicalDevice<'a> {

@@ -15,7 +15,8 @@ fn main() -> anyhow::Result<()> {
     let graphics_queue = logical_device.get_graphics_queue();
     let command_buffer = command_pool.allocate_command_buffer()?;
     let _image = logical_device.create_image(500, 300)?;
-    let _render_pass = logical_device.create_render_pass()?;
+    let render_pass = logical_device.create_render_pass()?;
+    render_pass.create_graphics_pipeline(500, 300)?;
     command_buffer.submit_empty_cmd(&graphics_queue)?;
     Ok(())
 }

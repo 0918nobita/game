@@ -1,10 +1,8 @@
 //! Vulkan インスタンス関連
 
-mod logical_device;
-mod window;
-
-use self::logical_device::ManagedLogicalDevice;
-use crate::glfw_wrapper::GlfwWrapper;
+use crate::{
+    glfw_wrapper::GlfwWrapper, logical_device::ManagedLogicalDevice, window::ManagedWindow,
+};
 use anyhow::Context;
 use ash::{
     extensions::khr::{Surface, Swapchain},
@@ -19,7 +17,6 @@ use ash::{
 use once_cell::sync::Lazy;
 use std::ffi::CStr;
 use std::{ffi::CString, os::raw::c_char};
-use window::ManagedWindow;
 
 /// 自動で解放される、Vulkan インスタンスのラッパー
 pub struct ManagedInstance<'a> {
