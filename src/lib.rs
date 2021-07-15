@@ -11,6 +11,7 @@ pub mod glfw_wrapper;
 mod image;
 pub mod instance;
 mod logical_device;
+mod pipeline;
 mod render_pass;
 mod shader;
 mod window;

@@ -1,28 +1,23 @@
+use crate::{
+    pipeline::ManagedPipeline,
+    shader::{ShaderModuleWrapper, FRAG_SHADER, VERT_SHADER},
+};
 use anyhow::Context;
 use ash::{
     version::DeviceV1_0,
     vk::{
         AttachmentDescription, AttachmentLoadOp, AttachmentReference, AttachmentStoreOp,
         ColorComponentFlags, CullModeFlags, Extent2D, Format, FrontFace,
-        /*GraphicsPipelineCreateInfo, */ ImageLayout, Offset2D,
-        /*Pipeline, */ PipelineBindPoint,
-        /*PipelineCache, */ PipelineColorBlendAttachmentState,
-        PipelineColorBlendStateCreateInfo, PipelineInputAssemblyStateCreateInfo,
-        PipelineLayoutCreateInfo, PipelineMultisampleStateCreateInfo,
-        PipelineRasterizationStateCreateInfo,
-        /*PipelineShaderStageCreateInfo, */ PipelineVertexInputStateCreateInfo,
-        PipelineViewportStateCreateInfo, PolygonMode, PrimitiveTopology, Rect2D, RenderPass,
-        RenderPassCreateInfo, SampleCountFlags, /*ShaderStageFlags, */ SubpassDescription,
-        Viewport,
+        GraphicsPipelineCreateInfo, ImageLayout, Offset2D, PipelineBindPoint, PipelineCache,
+        PipelineColorBlendAttachmentState, PipelineColorBlendStateCreateInfo,
+        PipelineInputAssemblyStateCreateInfo, PipelineLayoutCreateInfo,
+        PipelineMultisampleStateCreateInfo, PipelineRasterizationStateCreateInfo,
+        PipelineVertexInputStateCreateInfo, PipelineViewportStateCreateInfo, PolygonMode,
+        PrimitiveTopology, Rect2D, RenderPass, RenderPassCreateInfo, SampleCountFlags,
+        SubpassDescription, Viewport,
     },
     Device,
 };
-
-use crate::shader::{ShaderModuleWrapper, FRAG_SHADER, VERT_SHADER};
-// use once_cell::sync::Lazy;
-// use std::ffi::{CStr, CString};
-
-// static STAGE_NAME: Lazy<CString> = Lazy::new(|| CString::new("main").unwrap());
 
 pub struct ManagedRenderPass<'a> {
     device_raw: &'a Device,
@@ -62,7 +57,11 @@ impl<'a> ManagedRenderPass<'a> {
         })
     }
 
-    pub fn create_graphics_pipeline(&self, width: u32, height: u32) -> anyhow::Result<()> {
+    pub fn create_graphics_pipeline(
+        &self,
+        width: u32,
+        height: u32,
+    ) -> anyhow::Result<ManagedPipeline> {
         let viewport = Viewport {
             x: 0.0,
             y: 0.0,
@@ -75,19 +74,19 @@ impl<'a> ManagedRenderPass<'a> {
             offset: Offset2D { x: 0, y: 0 },
             extent: Extent2D { width, height },
         };
-        let _viewport_state = PipelineViewportStateCreateInfo::builder()
+        let viewport_state = PipelineViewportStateCreateInfo::builder()
             .viewports(&[viewport])
             .scissors(&[scissor])
             .build();
-        let _vertex_input_info = PipelineVertexInputStateCreateInfo::builder()
+        let vertex_input_info = PipelineVertexInputStateCreateInfo::builder()
             .vertex_attribute_descriptions(&[])
             .vertex_binding_descriptions(&[])
             .build();
-        let _input_assembly = PipelineInputAssemblyStateCreateInfo::builder()
+        let input_assembly = PipelineInputAssemblyStateCreateInfo::builder()
             .topology(PrimitiveTopology::TRIANGLE_LIST)
             .primitive_restart_enable(false)
             .build();
-        let _rasterizer = PipelineRasterizationStateCreateInfo::builder()
+        let rasterizer = PipelineRasterizationStateCreateInfo::builder()
             .depth_clamp_enable(false)
             .rasterizer_discard_enable(false)
             .polygon_mode(PolygonMode::FILL)
@@ -96,7 +95,7 @@ impl<'a> ManagedRenderPass<'a> {
             .front_face(FrontFace::CLOCKWISE)
             .depth_bias_enable(false)
             .build();
-        let _multisample = PipelineMultisampleStateCreateInfo::builder()
+        let multisample = PipelineMultisampleStateCreateInfo::builder()
             .sample_shading_enable(false)
             .rasterization_samples(SampleCountFlags::TYPE_1)
             .build();
@@ -109,7 +108,7 @@ impl<'a> ManagedRenderPass<'a> {
             )
             .blend_enable(false)
             .build();
-        let _blend = PipelineColorBlendStateCreateInfo::builder()
+        let blend = PipelineColorBlendStateCreateInfo::builder()
             .logic_op_enable(false)
             .attachments(&[blend_attachment])
             .build();
@@ -118,9 +117,13 @@ impl<'a> ManagedRenderPass<'a> {
             self.device_raw
                 .create_pipeline_layout(&layout_create_info, None)
         }?;
-        let _vert_shader = ShaderModuleWrapper::new(&self.device_raw, &VERT_SHADER)?;
-        let _frag_shader = ShaderModuleWrapper::new(&self.device_raw, &FRAG_SHADER)?;
-        /*let create_info = GraphicsPipelineCreateInfo::builder()
+        let vert_shader =
+            ShaderModuleWrapper::new(&self.device_raw, &VERT_SHADER.0, VERT_SHADER.1)?;
+        let vert_shader_stage = vert_shader.create_stage();
+        let frag_shader =
+            ShaderModuleWrapper::new(&self.device_raw, &FRAG_SHADER.0, FRAG_SHADER.1)?;
+        let frag_shader_stage = frag_shader.create_stage();
+        let create_info = GraphicsPipelineCreateInfo::builder()
             .viewport_state(&viewport_state)
             .vertex_input_state(&vertex_input_info)
             .input_assembly_state(&input_assembly)
@@ -128,10 +131,7 @@ impl<'a> ManagedRenderPass<'a> {
             .multisample_state(&multisample)
             .color_blend_state(&blend)
             .layout(pipeline_layout)
-            .stages(&[PipelineShaderStageCreateInfo::builder()
-                .stage(ShaderStageFlags::VERTEX)
-                .name(unsafe { CStr::from_ptr(STAGE_NAME.as_ptr()) })
-                .build()])
+            .stages(&[vert_shader_stage, frag_shader_stage])
             .render_pass(self.render_pass_raw)
             .subpass(0)
             .build();
@@ -139,18 +139,17 @@ impl<'a> ManagedRenderPass<'a> {
             self.device_raw
                 .create_graphics_pipelines(PipelineCache::null(), &[create_info], None)
         } {
-            Ok(*(pipelines
+            let pipeline = *pipelines
                 .first()
-                .context("Failed to create graphics pipeline")?))
+                .context("Failed to create graphics pipeline")?;
+            Ok(ManagedPipeline::new(
+                self.device_raw,
+                pipeline_layout,
+                pipeline,
+            ))
         } else {
             bail!("Failed to create graphics pipeline")
-        }*/
-        unsafe {
-            self.device_raw
-                .destroy_pipeline_layout(pipeline_layout, None);
-            trace!("PipelineLayout was destroyed");
-        };
-        Ok(())
+        }
     }
 }
 
