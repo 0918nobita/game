@@ -143,7 +143,12 @@ impl<'a> ManagedInstance<'a> {
                 .create_device(physical_device, &device_create_info, None)
         }
         .context("Failed to create logical device")?;
-        Ok(ManagedLogicalDevice::new(device_raw, queue_indices))
+        Ok(ManagedLogicalDevice::new(
+            &self.instance_raw,
+            physical_device,
+            device_raw,
+            queue_indices,
+        ))
     }
 }
 
