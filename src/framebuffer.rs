@@ -35,6 +35,10 @@ impl<'a> ManagedFramebuffer<'a> {
             framebuffer_raw,
         })
     }
+
+    pub fn get_framebuffer_raw(&self) -> Framebuffer {
+        self.framebuffer_raw
+    }
 }
 
 impl Drop for ManagedFramebuffer<'_> {

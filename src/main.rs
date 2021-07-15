@@ -18,8 +18,15 @@ fn main() -> anyhow::Result<()> {
     let command_buffer = command_pool.allocate_command_buffer()?;
     let image = logical_device.create_image(width, height)?;
     let render_pass = logical_device.create_render_pass()?;
-    let _pipeline = render_pass.create_graphics_pipeline(width, height)?;
-    let _framebuffer = logical_device.create_framebuffer(&render_pass, &image, width, height)?;
-    command_buffer.submit_empty_cmd(&graphics_queue)?;
+    let pipeline = render_pass.create_graphics_pipeline(width, height)?;
+    let framebuffer = logical_device.create_framebuffer(&render_pass, &image, width, height)?;
+    command_buffer.draw_triangle(
+        &graphics_queue,
+        &render_pass,
+        &framebuffer,
+        &pipeline,
+        width,
+        height,
+    )?;
     Ok(())
 }

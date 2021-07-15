@@ -29,7 +29,7 @@ impl<'a> ManagedRenderPass<'a> {
         let attachment_desc = AttachmentDescription::builder()
             .format(Format::R8G8B8A8_UNORM)
             .samples(SampleCountFlags::TYPE_1)
-            .load_op(AttachmentLoadOp::DONT_CARE)
+            .load_op(AttachmentLoadOp::CLEAR)
             .store_op(AttachmentStoreOp::STORE)
             .stencil_load_op(AttachmentLoadOp::DONT_CARE)
             .stencil_store_op(AttachmentStoreOp::DONT_CARE)
