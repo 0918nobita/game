@@ -1,11 +1,10 @@
+use crate::{
+    command_pool::ManagedCommandPool, image::ManagedImage, render_pass::ManagedRenderPass,
+};
 use ash::{
     version::DeviceV1_0,
     vk::{PhysicalDevice, Queue},
     Device, Instance,
-};
-
-use crate::{
-    command_pool::ManagedCommandPool, image::ManagedImage, render_pass::ManagedRenderPass,
 };
 
 pub struct ManagedLogicalDevice<'a> {

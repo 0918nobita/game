@@ -2,9 +2,10 @@ use anyhow::Context;
 use ash::{
     version::{DeviceV1_0, InstanceV1_0},
     vk::{
-        DeviceMemory, Extent3D, Format, Image, ImageCreateInfo, ImageLayout, ImageTiling,
-        ImageType, ImageUsageFlags, MemoryAllocateInfo, MemoryPropertyFlags, PhysicalDevice,
-        SampleCountFlags, SharingMode,
+        ComponentMapping, ComponentSwizzle, DeviceMemory, Extent3D, Format, Image,
+        ImageAspectFlags, ImageCreateInfo, ImageLayout, ImageSubresourceRange, ImageTiling,
+        ImageType, ImageUsageFlags, ImageView, ImageViewCreateInfo, ImageViewType,
+        MemoryAllocateInfo, MemoryPropertyFlags, PhysicalDevice, SampleCountFlags, SharingMode,
     },
     Device, Instance,
 };
@@ -13,6 +14,7 @@ pub struct ManagedImage<'a> {
     device_raw: &'a Device,
     device_memory_raw: DeviceMemory,
     image_raw: Image,
+    image_view: ImageView,
 }
 
 impl<'a> ManagedImage<'a> {
@@ -73,10 +75,35 @@ impl<'a> ManagedImage<'a> {
         .context("Failed to allocate memory for image")?;
         unsafe { device_raw.bind_image_memory(image_raw, device_memory_raw, 0) }
             .context("Failed to bind device memory to image")?;
+        let image_view_create_info = ImageViewCreateInfo::builder()
+            .image(image_raw)
+            .view_type(ImageViewType::TYPE_2D)
+            .format(Format::R8G8B8A8_UNORM)
+            .components(
+                ComponentMapping::builder()
+                    .r(ComponentSwizzle::IDENTITY)
+                    .g(ComponentSwizzle::IDENTITY)
+                    .b(ComponentSwizzle::IDENTITY)
+                    .a(ComponentSwizzle::IDENTITY)
+                    .build(),
+            )
+            .subresource_range(
+                ImageSubresourceRange::builder()
+                    .aspect_mask(ImageAspectFlags::COLOR)
+                    .base_mip_level(0)
+                    .level_count(1)
+                    .base_array_layer(0)
+                    .layer_count(1)
+                    .build(),
+            )
+            .build();
+        let image_view = unsafe { device_raw.create_image_view(&image_view_create_info, None) }
+            .context("Failed to create ImageView")?;
         Ok(ManagedImage {
             device_raw,
             device_memory_raw,
             image_raw,
+            image_view,
         })
     }
 }
@@ -84,6 +111,8 @@ impl<'a> ManagedImage<'a> {
 impl Drop for ManagedImage<'_> {
     fn drop(&mut self) {
         unsafe {
+            self.device_raw.destroy_image_view(self.image_view, None);
+            trace!("ImageView was destroyed");
             self.device_raw.destroy_image(self.image_raw, None);
             trace!("Image was destroyed");
             self.device_raw.free_memory(self.device_memory_raw, None);
