@@ -5,10 +5,13 @@ use ash::{
         ComponentMapping, ComponentSwizzle, DeviceMemory, Extent3D, Format, Image,
         ImageAspectFlags, ImageCreateInfo, ImageLayout, ImageSubresourceRange, ImageTiling,
         ImageType, ImageUsageFlags, ImageView, ImageViewCreateInfo, ImageViewType,
-        MemoryAllocateInfo, MemoryPropertyFlags, PhysicalDevice, SampleCountFlags, SharingMode,
+        MemoryAllocateInfo, MemoryMapFlags, MemoryPropertyFlags, PhysicalDevice, SampleCountFlags,
+        SharingMode,
     },
     Device, Instance,
 };
+use std::convert::TryFrom;
+use std::slice::from_raw_parts;
 
 pub struct ManagedImage<'a> {
     device_raw: &'a Device,
@@ -59,7 +62,7 @@ impl<'a> ManagedImage<'a> {
                 (memory_requirements.memory_type_bits & 2u32.pow(index) != 0
                     && memory_type
                         .property_flags
-                        .contains(MemoryPropertyFlags::DEVICE_LOCAL))
+                        .contains(MemoryPropertyFlags::HOST_VISIBLE))
                 .then(|| index)
             })
             .context("No suitable memory type")?;
@@ -109,6 +112,28 @@ impl<'a> ManagedImage<'a> {
 
     pub fn get_image_view_raw(&self) -> ImageView {
         self.image_view
+    }
+
+    pub fn export_bitmap(&self) -> anyhow::Result<()> {
+        let memory_requirements = unsafe {
+            self.device_raw
+                .get_image_memory_requirements(self.image_raw)
+        };
+        let mapped_memory = unsafe {
+            self.device_raw.map_memory(
+                self.device_memory_raw,
+                0u64,
+                memory_requirements.size,
+                MemoryMapFlags::empty(),
+            )
+        }
+        .context("Failed to map memory")? as *mut u8;
+        let size =
+            usize::try_from(memory_requirements.size).context("Failed to convert u64 to usize")?;
+        let _mapped_memory = unsafe { from_raw_parts(mapped_memory, size) };
+        // std::fs::write("out", mapped_memory)?;
+        unsafe { self.device_raw.unmap_memory(self.device_memory_raw) };
+        Ok(())
     }
 }
 
