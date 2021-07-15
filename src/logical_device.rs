@@ -1,5 +1,6 @@
 use crate::{
-    command_pool::ManagedCommandPool, image::ManagedImage, render_pass::ManagedRenderPass,
+    command_pool::ManagedCommandPool, framebuffer::ManagedFramebuffer, image::ManagedImage,
+    render_pass::ManagedRenderPass,
 };
 use ash::{
     version::DeviceV1_0,
@@ -55,6 +56,22 @@ impl<'a> ManagedLogicalDevice<'a> {
 
     pub fn create_render_pass(&self) -> anyhow::Result<ManagedRenderPass> {
         ManagedRenderPass::new(&self.device_raw)
+    }
+
+    pub fn create_framebuffer(
+        &'a self,
+        render_pass: &'a ManagedRenderPass,
+        connectable_image: &'a ManagedImage,
+        width: u32,
+        height: u32,
+    ) -> anyhow::Result<ManagedFramebuffer<'a>> {
+        ManagedFramebuffer::new(
+            &self.device_raw,
+            render_pass,
+            connectable_image,
+            width,
+            height,
+        )
     }
 }
 

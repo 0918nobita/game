@@ -7,6 +7,7 @@ extern crate log;
 
 mod command_buffer;
 mod command_pool;
+mod framebuffer;
 pub mod glfw_wrapper;
 mod image;
 pub mod instance;

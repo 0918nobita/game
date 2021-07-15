@@ -151,6 +151,10 @@ impl<'a> ManagedRenderPass<'a> {
             bail!("Failed to create graphics pipeline")
         }
     }
+
+    pub fn get_render_pass_raw(&self) -> RenderPass {
+        self.render_pass_raw
+    }
 }
 
 impl Drop for ManagedRenderPass<'_> {

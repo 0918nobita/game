@@ -106,6 +106,10 @@ impl<'a> ManagedImage<'a> {
             image_view,
         })
     }
+
+    pub fn get_image_view_raw(&self) -> ImageView {
+        self.image_view
+    }
 }
 
 impl Drop for ManagedImage<'_> {
