@@ -5,19 +5,19 @@ use ash::{
 };
 
 pub struct ManagedPipeline<'a> {
-    device_raw: &'a Device,
+    device: &'a Device,
     pipeline_layout: PipelineLayout,
     pipeline_raw: Pipeline,
 }
 
 impl<'a> ManagedPipeline<'a> {
     pub fn new(
-        device_raw: &'a Device,
+        device: &'a Device,
         pipeline_layout: PipelineLayout,
         pipeline_raw: Pipeline,
     ) -> ManagedPipeline<'a> {
         ManagedPipeline {
-            device_raw,
+            device,
             pipeline_layout,
             pipeline_raw,
         }
@@ -31,10 +31,10 @@ impl<'a> ManagedPipeline<'a> {
 impl Drop for ManagedPipeline<'_> {
     fn drop(&mut self) {
         unsafe {
-            self.device_raw
+            self.device
                 .destroy_pipeline_layout(self.pipeline_layout, None);
             trace!("PipelineLayout was destroyed");
-            self.device_raw.destroy_pipeline(self.pipeline_raw, None);
+            self.device.destroy_pipeline(self.pipeline_raw, None);
             trace!("Pipeline was destroyed");
         }
     }

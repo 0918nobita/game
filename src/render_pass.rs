@@ -20,12 +20,12 @@ use ash::{
 };
 
 pub struct ManagedRenderPass<'a> {
-    device_raw: &'a Device,
+    device: &'a Device,
     render_pass_raw: RenderPass,
 }
 
 impl<'a> ManagedRenderPass<'a> {
-    pub fn new(device_raw: &'a Device) -> anyhow::Result<ManagedRenderPass<'a>> {
+    pub fn new(device: &'a Device) -> anyhow::Result<ManagedRenderPass<'a>> {
         let attachment_desc = AttachmentDescription::builder()
             .format(Format::R8G8B8A8_UNORM)
             .samples(SampleCountFlags::TYPE_1)
@@ -49,10 +49,10 @@ impl<'a> ManagedRenderPass<'a> {
             .subpasses(&[subpass])
             .dependencies(&[])
             .build();
-        let render_pass_raw = unsafe { device_raw.create_render_pass(&create_info, None) }
+        let render_pass_raw = unsafe { device.create_render_pass(&create_info, None) }
             .context("Failed to create RenderPass")?;
         Ok(ManagedRenderPass {
-            device_raw,
+            device,
             render_pass_raw,
         })
     }
@@ -114,14 +114,12 @@ impl<'a> ManagedRenderPass<'a> {
             .build();
         let layout_create_info = PipelineLayoutCreateInfo::builder().set_layouts(&[]).build();
         let pipeline_layout = unsafe {
-            self.device_raw
+            self.device
                 .create_pipeline_layout(&layout_create_info, None)
         }?;
-        let vert_shader =
-            ShaderModuleWrapper::new(&self.device_raw, &VERT_SHADER.0, VERT_SHADER.1)?;
+        let vert_shader = ShaderModuleWrapper::new(&self.device, &VERT_SHADER.0, VERT_SHADER.1)?;
         let vert_shader_stage = vert_shader.create_stage();
-        let frag_shader =
-            ShaderModuleWrapper::new(&self.device_raw, &FRAG_SHADER.0, FRAG_SHADER.1)?;
+        let frag_shader = ShaderModuleWrapper::new(&self.device, &FRAG_SHADER.0, FRAG_SHADER.1)?;
         let frag_shader_stage = frag_shader.create_stage();
         let create_info = GraphicsPipelineCreateInfo::builder()
             .viewport_state(&viewport_state)
@@ -136,17 +134,13 @@ impl<'a> ManagedRenderPass<'a> {
             .subpass(0)
             .build();
         if let Ok(pipelines) = unsafe {
-            self.device_raw
+            self.device
                 .create_graphics_pipelines(PipelineCache::null(), &[create_info], None)
         } {
             let pipeline = *pipelines
                 .first()
                 .context("Failed to create graphics pipeline")?;
-            Ok(ManagedPipeline::new(
-                self.device_raw,
-                pipeline_layout,
-                pipeline,
-            ))
+            Ok(ManagedPipeline::new(self.device, pipeline_layout, pipeline))
         } else {
             bail!("Failed to create graphics pipeline")
         }
@@ -159,10 +153,7 @@ impl<'a> ManagedRenderPass<'a> {
 
 impl Drop for ManagedRenderPass<'_> {
     fn drop(&mut self) {
-        unsafe {
-            self.device_raw
-                .destroy_render_pass(self.render_pass_raw, None)
-        };
+        unsafe { self.device.destroy_render_pass(self.render_pass_raw, None) };
         trace!("RenderPass was destroyed");
     }
 }

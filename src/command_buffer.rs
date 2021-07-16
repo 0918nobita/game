@@ -7,26 +7,25 @@ use ash::{
     },
     Device,
 };
-
 use crate::{
     framebuffer::ManagedFramebuffer, pipeline::ManagedPipeline, render_pass::ManagedRenderPass,
 };
 
 pub struct ManagedCommandBuffer<'a> {
-    device_raw: &'a Device,
-    command_pool_raw: &'a CommandPool,
+    device: &'a Device,
+    command_pool: &'a CommandPool,
     command_buffer_raw: CommandBuffer,
 }
 
 impl<'a> ManagedCommandBuffer<'a> {
     pub fn new(
-        device_raw: &'a Device,
-        command_pool_raw: &'a CommandPool,
+        device: &'a Device,
+        command_pool: &'a CommandPool,
         command_buffer_raw: CommandBuffer,
     ) -> ManagedCommandBuffer<'a> {
         ManagedCommandBuffer {
-            device_raw,
-            command_pool_raw,
+            device,
+            command_pool,
             command_buffer_raw,
         }
     }
@@ -45,7 +44,7 @@ impl<'a> ManagedCommandBuffer<'a> {
             .command_buffers(&[self.command_buffer_raw])
             .build();
         unsafe {
-            self.device_raw
+            self.device
                 .begin_command_buffer(self.command_buffer_raw, &begin_info)
         }?;
         let render_pass_begin_info = RenderPassBeginInfo::builder()
@@ -64,24 +63,22 @@ impl<'a> ManagedCommandBuffer<'a> {
             }])
             .build();
         unsafe {
-            self.device_raw.cmd_begin_render_pass(
+            self.device.cmd_begin_render_pass(
                 self.command_buffer_raw,
                 &render_pass_begin_info,
                 SubpassContents::INLINE,
             );
-            self.device_raw.cmd_bind_pipeline(
+            self.device.cmd_bind_pipeline(
                 self.command_buffer_raw,
                 PipelineBindPoint::GRAPHICS,
                 pipeline.get_pipeline_raw(),
             );
-            self.device_raw
-                .cmd_draw(self.command_buffer_raw, 3, 1, 0, 0);
-            self.device_raw.cmd_end_render_pass(self.command_buffer_raw);
-            self.device_raw
-                .end_command_buffer(self.command_buffer_raw)?;
-            self.device_raw
+            self.device.cmd_draw(self.command_buffer_raw, 3, 1, 0, 0);
+            self.device.cmd_end_render_pass(self.command_buffer_raw);
+            self.device.end_command_buffer(self.command_buffer_raw)?;
+            self.device
                 .queue_submit(*queue, &[submit_info], Fence::null())?;
-            self.device_raw.queue_wait_idle(*queue)?;
+            self.device.queue_wait_idle(*queue)?;
         }
         Ok(())
     }
@@ -90,8 +87,8 @@ impl<'a> ManagedCommandBuffer<'a> {
 impl Drop for ManagedCommandBuffer<'_> {
     fn drop(&mut self) {
         unsafe {
-            self.device_raw
-                .free_command_buffers(*self.command_pool_raw, &[self.command_buffer_raw])
+            self.device
+                .free_command_buffers(*self.command_pool, &[self.command_buffer_raw])
         }
         trace!("CommandBuffer was destroyed")
     }

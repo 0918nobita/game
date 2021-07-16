@@ -1,5 +1,6 @@
 use crate::{
-    command_pool::ManagedCommandPool, framebuffer::ManagedFramebuffer, image::ManagedImage,
+    command_pool::ManagedCommandPool, framebuffer::ManagedFramebuffer,
+    linear_image::ManagedAndLinearImage, optimized_image::ManagedAndOptimizedImage,
     render_pass::ManagedRenderPass,
 };
 use ash::{
@@ -9,7 +10,7 @@ use ash::{
 };
 
 pub struct ManagedLogicalDevice<'a> {
-    instance_raw: &'a Instance,
+    instance: &'a Instance,
     physical_device: PhysicalDevice,
     device_raw: Device,
     queue_indices: Vec<u32>,
@@ -17,14 +18,14 @@ pub struct ManagedLogicalDevice<'a> {
 
 impl<'a> ManagedLogicalDevice<'a> {
     pub fn new(
-        instance_raw: &'a Instance,
+        instance: &'a Instance,
         physical_device: PhysicalDevice,
         device_raw: Device,
         queue_indices: Vec<u32>,
     ) -> ManagedLogicalDevice<'a> {
         // 三角形を画像を描画するのが直近の目標なので、グラフィックスキューだけ利用して表示キューは放置
         ManagedLogicalDevice {
-            instance_raw,
+            instance,
             physical_device,
             device_raw,
             queue_indices,
@@ -44,9 +45,27 @@ impl<'a> ManagedLogicalDevice<'a> {
         ManagedCommandPool::new(&self.device_raw, graphics_queue_family_index)
     }
 
-    pub fn create_image(&self, width: u32, height: u32) -> anyhow::Result<ManagedImage> {
-        ManagedImage::new(
-            self.instance_raw,
+    pub fn create_optimized_image(
+        &self,
+        width: u32,
+        height: u32,
+    ) -> anyhow::Result<ManagedAndOptimizedImage> {
+        ManagedAndOptimizedImage::new(
+            self.instance,
+            &self.physical_device,
+            &self.device_raw,
+            width,
+            height,
+        )
+    }
+
+    pub fn create_linear_image(
+        &self,
+        width: u32,
+        height: u32,
+    ) -> anyhow::Result<ManagedAndLinearImage> {
+        ManagedAndLinearImage::new(
+            self.instance,
             &self.physical_device,
             &self.device_raw,
             width,
@@ -61,7 +80,7 @@ impl<'a> ManagedLogicalDevice<'a> {
     pub fn create_framebuffer(
         &'a self,
         render_pass: &'a ManagedRenderPass,
-        connectable_image: &'a ManagedImage,
+        connectable_image: &'a ManagedAndOptimizedImage,
         width: u32,
         height: u32,
     ) -> anyhow::Result<ManagedFramebuffer<'a>> {

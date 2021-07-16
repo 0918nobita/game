@@ -5,55 +5,49 @@ use ash::{
         ComponentMapping, ComponentSwizzle, DeviceMemory, Extent3D, Format, Image,
         ImageAspectFlags, ImageCreateInfo, ImageLayout, ImageSubresourceRange, ImageTiling,
         ImageType, ImageUsageFlags, ImageView, ImageViewCreateInfo, ImageViewType,
-        MemoryAllocateInfo, MemoryMapFlags, MemoryPropertyFlags, PhysicalDevice, SampleCountFlags,
-        SharingMode,
+        MemoryAllocateInfo, MemoryPropertyFlags, PhysicalDevice, SampleCountFlags, SharingMode,
     },
     Device, Instance,
 };
-use image::Rgb;
-use std::convert::TryFrom;
-use std::slice::from_raw_parts;
 
-pub struct ManagedImage<'a> {
-    device_raw: &'a Device,
-    device_memory_raw: DeviceMemory,
+pub struct ManagedAndOptimizedImage<'a> {
+    device: &'a Device,
+    device_memory: DeviceMemory,
     image_raw: Image,
     image_view: ImageView,
 }
 
-impl<'a> ManagedImage<'a> {
+impl<'a> ManagedAndOptimizedImage<'a> {
     pub fn new(
-        instance_raw: &Instance,
+        instance: &Instance,
         physical_device: &PhysicalDevice,
-        device_raw: &'a Device,
+        device: &'a Device,
         width: u32,
         height: u32,
-    ) -> anyhow::Result<ManagedImage<'a>> {
+    ) -> anyhow::Result<ManagedAndOptimizedImage<'a>> {
         let create_info = ImageCreateInfo::builder()
             .image_type(ImageType::TYPE_2D)
-            .extent(
-                Extent3D::builder()
-                    .width(width)
-                    .height(height)
-                    .depth(1)
-                    .build(),
-            )
+            .extent(Extent3D {
+                width,
+                height,
+                depth: 1,
+            })
             .mip_levels(1)
             .array_layers(1)
             .format(Format::R8G8B8A8_UNORM)
-            .tiling(ImageTiling::LINEAR)
+            .tiling(ImageTiling::OPTIMAL)
             .initial_layout(ImageLayout::UNDEFINED)
-            .usage(ImageUsageFlags::COLOR_ATTACHMENT)
+            .usage(ImageUsageFlags::COLOR_ATTACHMENT | ImageUsageFlags::TRANSFER_SRC)
             .sharing_mode(SharingMode::EXCLUSIVE)
             .samples(SampleCountFlags::TYPE_1)
             .build();
         // 物理デバイスが持っているメモリについての情報
         let memory_properties =
-            unsafe { instance_raw.get_physical_device_memory_properties(*physical_device) };
-        let image_raw = unsafe { device_raw.create_image(&create_info, None) }
-            .context("Failed to create image")?;
+            unsafe { instance.get_physical_device_memory_properties(*physical_device) };
+        let image_raw = unsafe { device.create_image(&create_info, None) }
+            .context("Failed to create optimized image")?;
         // イメージに対してどんな種類のメモリがどれくらいのサイズ必要か
-        let memory_requirements = unsafe { device_raw.get_image_memory_requirements(image_raw) };
+        let memory_requirements = unsafe { device.get_image_memory_requirements(image_raw) };
         let memory_type_index = memory_properties
             .memory_types
             .iter()
@@ -67,8 +61,8 @@ impl<'a> ManagedImage<'a> {
                 .then(|| index)
             })
             .context("No suitable memory type")?;
-        let device_memory_raw = unsafe {
-            device_raw.allocate_memory(
+        let device_memory = unsafe {
+            device.allocate_memory(
                 &MemoryAllocateInfo::builder()
                     .allocation_size(memory_requirements.size)
                     .memory_type_index(memory_type_index)
@@ -76,9 +70,9 @@ impl<'a> ManagedImage<'a> {
                 None,
             )
         }
-        .context("Failed to allocate memory for image")?;
-        unsafe { device_raw.bind_image_memory(image_raw, device_memory_raw, 0) }
-            .context("Failed to bind device memory to image")?;
+        .context("Failed to allocate memory for optimized image")?;
+        unsafe { device.bind_image_memory(image_raw, device_memory, 0) }
+            .context("Failed to bind device memory to optimized image")?;
         let image_view_create_info = ImageViewCreateInfo::builder()
             .image(image_raw)
             .view_type(ImageViewType::TYPE_2D)
@@ -101,11 +95,11 @@ impl<'a> ManagedImage<'a> {
                     .build(),
             )
             .build();
-        let image_view = unsafe { device_raw.create_image_view(&image_view_create_info, None) }
-            .context("Failed to create ImageView")?;
-        Ok(ManagedImage {
-            device_raw,
-            device_memory_raw,
+        let image_view = unsafe { device.create_image_view(&image_view_create_info, None) }
+            .context("Failed to create ImageView for optimized image")?;
+        Ok(ManagedAndOptimizedImage {
+            device,
+            device_memory,
             image_raw,
             image_view,
         })
@@ -115,6 +109,7 @@ impl<'a> ManagedImage<'a> {
         self.image_view
     }
 
+    /*
     pub fn export_bitmap(&self, width: u32, height: u32) -> anyhow::Result<()> {
         let memory_requirements = unsafe {
             self.device_raw
@@ -131,7 +126,7 @@ impl<'a> ManagedImage<'a> {
         .context("Failed to map memory")? as *mut u8;
         let size =
             usize::try_from(memory_requirements.size).context("Failed to convert u64 to usize")?;
-        trace!("size: {}", size);
+        debug!("Image size: {}", size);
         let mapped_memory = unsafe { from_raw_parts(mapped_memory, size) };
         let input_size = (width * height * 4) as usize;
         let mut input = vec![0u8; input_size];
@@ -148,17 +143,16 @@ impl<'a> ManagedImage<'a> {
         unsafe { self.device_raw.unmap_memory(self.device_memory_raw) };
         Ok(())
     }
+    */
 }
 
-impl Drop for ManagedImage<'_> {
+impl Drop for ManagedAndOptimizedImage<'_> {
     fn drop(&mut self) {
-        unsafe {
-            self.device_raw.destroy_image_view(self.image_view, None);
-            trace!("ImageView was destroyed");
-            self.device_raw.destroy_image(self.image_raw, None);
-            trace!("Image was destroyed");
-            self.device_raw.free_memory(self.device_memory_raw, None);
-            trace!("GPU memory allocated for image was released");
-        }
+        unsafe { self.device.destroy_image_view(self.image_view, None) };
+        trace!("ImageView of optimized image was destroyed");
+        unsafe { self.device.destroy_image(self.image_raw, None) };
+        trace!("Optimized image was destroyed");
+        unsafe { self.device.free_memory(self.device_memory, None) };
+        trace!("GPU memory allocated for optimized image was released");
     }
 }
