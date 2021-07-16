@@ -10,6 +10,7 @@ use ash::{
     },
     Device, Instance,
 };
+use image::Rgb;
 use std::convert::TryFrom;
 use std::slice::from_raw_parts;
 
@@ -40,7 +41,7 @@ impl<'a> ManagedImage<'a> {
             .mip_levels(1)
             .array_layers(1)
             .format(Format::R8G8B8A8_UNORM)
-            .tiling(ImageTiling::OPTIMAL)
+            .tiling(ImageTiling::LINEAR)
             .initial_layout(ImageLayout::UNDEFINED)
             .usage(ImageUsageFlags::COLOR_ATTACHMENT)
             .sharing_mode(SharingMode::EXCLUSIVE)
@@ -114,7 +115,7 @@ impl<'a> ManagedImage<'a> {
         self.image_view
     }
 
-    pub fn export_bitmap(&self) -> anyhow::Result<()> {
+    pub fn export_bitmap(&self, width: u32, height: u32) -> anyhow::Result<()> {
         let memory_requirements = unsafe {
             self.device_raw
                 .get_image_memory_requirements(self.image_raw)
@@ -130,8 +131,20 @@ impl<'a> ManagedImage<'a> {
         .context("Failed to map memory")? as *mut u8;
         let size =
             usize::try_from(memory_requirements.size).context("Failed to convert u64 to usize")?;
-        let _mapped_memory = unsafe { from_raw_parts(mapped_memory, size) };
-        // std::fs::write("out", mapped_memory)?;
+        trace!("size: {}", size);
+        let mapped_memory = unsafe { from_raw_parts(mapped_memory, size) };
+        let input_size = (width * height * 4) as usize;
+        let mut input = vec![0u8; input_size];
+        input.copy_from_slice(mapped_memory);
+        let mut output = vec![0u8; (width * height * 3) as usize];
+        for (output, chunk) in output.chunks_exact_mut(3).zip(input.chunks_exact(4)) {
+            output.copy_from_slice(&chunk[0..3])
+        }
+        let image_buffer = image::ImageBuffer::<Rgb<u8>, _>::from_raw(width, height, output)
+            .context("Failed to create image::ImageBuffer")?;
+        image_buffer
+            .save("triangle.bmp")
+            .context("Failed to save image")?;
         unsafe { self.device_raw.unmap_memory(self.device_memory_raw) };
         Ok(())
     }

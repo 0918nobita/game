@@ -28,6 +28,6 @@ fn main() -> anyhow::Result<()> {
         width,
         height,
     )?;
-    image.export_bitmap()?;
+    image.export_bitmap(width, height)?;
     Ok(())
 }
