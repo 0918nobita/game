@@ -1,14 +1,17 @@
+use crate::{
+    framebuffer::ManagedFramebuffer, linear_image::ManagedAndLinearImage,
+    optimized_image::ManagedAndOptimizedImage, pipeline::ManagedPipeline,
+    render_pass::ManagedRenderPass,
+};
 use ash::{
     version::DeviceV1_0,
     vk::{
-        ClearColorValue, ClearValue, CommandBuffer, CommandBufferBeginInfo, CommandPool, Extent2D,
-        Fence, Offset2D, PipelineBindPoint, Queue, Rect2D, RenderPassBeginInfo, SubmitInfo,
-        SubpassContents,
+        ClearColorValue, ClearValue, CommandBuffer, CommandBufferBeginInfo,
+        CommandBufferResetFlags, CommandPool, Extent2D, Fence, Filter, ImageAspectFlags, ImageBlit,
+        ImageLayout, ImageSubresourceLayers, Offset2D, Offset3D, PipelineBindPoint, Queue, Rect2D,
+        RenderPassBeginInfo, SubmitInfo, SubpassContents,
     },
     Device,
-};
-use crate::{
-    framebuffer::ManagedFramebuffer, pipeline::ManagedPipeline, render_pass::ManagedRenderPass,
 };
 
 pub struct ManagedCommandBuffer<'a> {
@@ -80,6 +83,66 @@ impl<'a> ManagedCommandBuffer<'a> {
                 .queue_submit(*queue, &[submit_info], Fence::null())?;
             self.device.queue_wait_idle(*queue)?;
         }
+        Ok(())
+    }
+
+    pub fn blit_image(
+        &self,
+        queue: &Queue,
+        src_image: &ManagedAndOptimizedImage,
+        dst_image: &ManagedAndLinearImage,
+        width: i32,
+        height: i32,
+    ) -> anyhow::Result<()> {
+        let begin_info = CommandBufferBeginInfo::builder().build();
+        let submit_info = SubmitInfo::builder()
+            .command_buffers(&[self.command_buffer_raw])
+            .build();
+        unsafe {
+            self.device.reset_command_buffer(
+                self.command_buffer_raw,
+                CommandBufferResetFlags::RELEASE_RESOURCES,
+            )?;
+            self.device
+                .begin_command_buffer(self.command_buffer_raw, &begin_info)?;
+            let blit_size = Offset3D {
+                x: width,
+                y: height,
+                z: 1,
+            };
+            self.device.cmd_blit_image(
+                self.command_buffer_raw,
+                src_image.get_image_raw(),
+                ImageLayout::GENERAL,
+                dst_image.get_image_raw(),
+                ImageLayout::GENERAL,
+                &[ImageBlit::builder()
+                    .src_offsets([Default::default(), blit_size])
+                    .src_subresource(
+                        ImageSubresourceLayers::builder()
+                            .mip_level(0)
+                            .base_array_layer(0)
+                            .aspect_mask(ImageAspectFlags::COLOR)
+                            .layer_count(1)
+                            .build(),
+                    )
+                    .dst_offsets([Default::default(), blit_size])
+                    .dst_subresource(
+                        ImageSubresourceLayers::builder()
+                            .mip_level(0)
+                            .base_array_layer(0)
+                            .aspect_mask(ImageAspectFlags::COLOR)
+                            .layer_count(1)
+                            .build(),
+                    )
+                    .build()],
+                Filter::LINEAR,
+            );
+            self.device.end_command_buffer(self.command_buffer_raw)?;
+            self.device
+                .queue_submit(*queue, &[submit_info], Fence::null())?;
+            self.device.queue_wait_idle(*queue)?;
+        };
         Ok(())
     }
 }

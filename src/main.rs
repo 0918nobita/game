@@ -16,12 +16,11 @@ fn main() -> anyhow::Result<()> {
     let command_pool = logical_device.create_command_pool()?;
     let graphics_queue = logical_device.get_graphics_queue();
     let command_buffer = command_pool.allocate_command_buffer()?;
-    let optimized_image = logical_device.create_optimized_image(width, height)?;
-    let _linear_image = logical_device.create_linear_image(width, height)?;
+    let src_image = logical_device.create_optimized_image(width, height)?;
+    let dst_image = logical_device.create_linear_image(width, height)?;
     let render_pass = logical_device.create_render_pass()?;
     let pipeline = render_pass.create_graphics_pipeline(width, height)?;
-    let framebuffer =
-        logical_device.create_framebuffer(&render_pass, &optimized_image, width, height)?;
+    let framebuffer = logical_device.create_framebuffer(&render_pass, &src_image, width, height)?;
     command_buffer.draw_triangle(
         &graphics_queue,
         &render_pass,
@@ -30,6 +29,12 @@ fn main() -> anyhow::Result<()> {
         width,
         height,
     )?;
-    // image.export_bitmap(width, height)?;
+    command_buffer.blit_image(
+        &graphics_queue,
+        &src_image,
+        &dst_image,
+        width as i32,
+        height as i32,
+    )?;
     Ok(())
 }

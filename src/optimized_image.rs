@@ -105,6 +105,10 @@ impl<'a> ManagedAndOptimizedImage<'a> {
         })
     }
 
+    pub fn get_image_raw(&self) -> Image {
+        self.image_raw
+    }
+
     pub fn get_image_view_raw(&self) -> ImageView {
         self.image_view
     }

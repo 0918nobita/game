@@ -1,7 +1,10 @@
 use super::command_buffer::ManagedCommandBuffer;
 use ash::{
     version::DeviceV1_0,
-    vk::{CommandBufferAllocateInfo, CommandBufferLevel, CommandPool, CommandPoolCreateInfo},
+    vk::{
+        CommandBufferAllocateInfo, CommandBufferLevel, CommandPool, CommandPoolCreateFlags,
+        CommandPoolCreateInfo,
+    },
     Device,
 };
 
@@ -16,6 +19,7 @@ impl<'a> ManagedCommandPool<'a> {
         graphics_queue_family_index: u32,
     ) -> anyhow::Result<ManagedCommandPool<'a>> {
         let create_info = CommandPoolCreateInfo::builder()
+            .flags(CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
             .queue_family_index(graphics_queue_family_index)
             .build();
         let command_pool_raw = unsafe { device.create_command_pool(&create_info, None) }?;
