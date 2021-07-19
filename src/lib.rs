@@ -1,9 +1,12 @@
+mod physical_device;
+
 #[macro_use]
 extern crate log;
 
 use anyhow::Context;
 use ash::version::{EntryV1_0, InstanceV1_0};
 use once_cell::sync::Lazy;
+use physical_device::PhysicalDevice;
 use std::ffi::CString;
 
 static APPLICATION_NAME: Lazy<CString> = Lazy::new(|| CString::new("Hello Triangle").unwrap());
@@ -15,17 +18,6 @@ static VALIDATION_LAYERS: Lazy<Vec<CString>> = Lazy::new(|| {
         vec![]
     }
 });
-
-pub struct PhysicalDevice {
-    device_type: ash::vk::PhysicalDeviceType,
-    device_name: String,
-}
-
-impl std::fmt::Debug for PhysicalDevice {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({:?})", self.device_name, self.device_type)
-    }
-}
 
 pub struct Instance {
     raw: ash::Instance,
@@ -79,10 +71,7 @@ fn wrap_raw_physical_device(
     raw_physical_device: ash::vk::PhysicalDevice,
 ) -> PhysicalDevice {
     let props = unsafe { raw_instance.get_physical_device_properties(raw_physical_device) };
-    PhysicalDevice {
-        device_name: { string_from_i8_array(props.device_name) },
-        device_type: props.device_type,
-    }
+    PhysicalDevice::new(props.device_type, string_from_i8_array(props.device_name))
 }
 
 fn string_from_i8_array(arr: [i8; 256]) -> String {
