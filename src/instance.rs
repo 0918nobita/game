@@ -1,9 +1,10 @@
+use crate::logical_device::LogicalDevice;
 use crate::physical_device::PhysicalDevice;
 use crate::queue_family_index::{Graphics, QueueFamilyIndex};
 use anyhow::Context;
-use ash::version::{EntryV1_0, InstanceV1_0};
+use ash::version::{DeviceV1_0, EntryV1_0, InstanceV1_0};
 use once_cell::sync::Lazy;
-use std::ffi::CString;
+use std::{ffi::CString, os::raw::c_char};
 
 static APPLICATION_NAME: Lazy<CString> = Lazy::new(|| CString::new("Hello Triangle").unwrap());
 static ENGINE_NAME: Lazy<CString> = Lazy::new(|| CString::new("No Engine").unwrap());
@@ -55,7 +56,40 @@ impl Instance {
                     })
                     .collect::<Vec<_>>()
             })
-            .context("No suitable physical device")
+    }
+
+    pub fn create_logical_device(
+        &self,
+        physical_device: &PhysicalDevice,
+    ) -> anyhow::Result<LogicalDevice> {
+        let queue_create_info = ash::vk::DeviceQueueCreateInfo::builder()
+            .queue_family_index(physical_device.graphics_queue_family.raw_index)
+            .queue_priorities(&[1.0f32])
+            .build();
+        let device_features = ash::vk::PhysicalDeviceFeatures::builder().build();
+        let layer_name_ptrs: Vec<*const c_char> = (*VALIDATION_LAYERS)
+            .iter()
+            .map(|name| name.as_ptr())
+            .collect();
+        let device_create_info = ash::vk::DeviceCreateInfo::builder()
+            .queue_create_infos(&[queue_create_info])
+            .enabled_extension_names(&[])
+            .enabled_features(&device_features)
+            .enabled_layer_names(&layer_name_ptrs)
+            .build();
+        let device_raw = unsafe {
+            self.raw
+                .create_device(physical_device.raw, &device_create_info, None)
+        }
+        .context("Failed to create logical device")?;
+        /*
+            以下の解放処理は LogicalDevice struct の impl Drop に直接記述してもいいが、
+            もともと ash::Instance をもとにして生成された struct が ash::Instance に
+            依存せずに impl Drop する方法を調査するためにクロージャを渡している
+        */
+        Ok(LogicalDevice::new(Box::new(move || unsafe {
+            device_raw.destroy_device(None)
+        })))
     }
 }
 
@@ -83,6 +117,7 @@ fn try_create_physical_device_with_graphics_queue(
                 .then(|| QueueFamilyIndex::<Graphics>::new(queue_family_index as u32))
         })
         .map(|graphics_queue_family| PhysicalDevice {
+            raw: raw_physical_device,
             device_type: props.device_type,
             device_name: string_from_i8_array(props.device_name),
             graphics_queue_family,

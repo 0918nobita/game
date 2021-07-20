@@ -1,6 +1,7 @@
 use crate::queue_family_index::{Graphics, QueueFamilyIndex};
 
 pub struct PhysicalDevice {
+    pub raw: ash::vk::PhysicalDevice,
     pub device_type: ash::vk::PhysicalDeviceType,
     pub device_name: String,
     pub graphics_queue_family: QueueFamilyIndex<Graphics>,
