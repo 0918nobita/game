@@ -8,6 +8,7 @@ use std::rc::Rc;
 
 fn main() -> anyhow::Result<()> {
     env_logger::init();
+    game::test();
     let entry = unsafe { ash::Entry::new() }?;
     let instance = Instance::new(&entry)?;
     let physical_devices = instance.enumerate_physical_devices()?;
@@ -19,7 +20,7 @@ fn main() -> anyhow::Result<()> {
         .context("No suitable physical device")?;
     let logical_device = instance.create_logical_device(physical_device)?;
     let _command_pool =
-        Rc::clone(&logical_device).create_command_pool(&physical_device.graphics_queue_family())?;
+        Rc::clone(&logical_device).create_command_pool(physical_device.graphics_queue_family())?;
     trace!("Complete.");
     Ok(())
 }
