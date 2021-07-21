@@ -1,4 +1,5 @@
 pub struct CommandPool {
+    /// コマンドプールの解放処理
     destroy: Box<dyn FnMut()>,
 }
 

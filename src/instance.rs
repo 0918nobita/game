@@ -63,7 +63,7 @@ impl Instance {
         physical_device: &PhysicalDevice,
     ) -> anyhow::Result<Rc<LogicalDevice>> {
         let queue_create_info = ash::vk::DeviceQueueCreateInfo::builder()
-            .queue_family_index(*physical_device.graphics_queue_family)
+            .queue_family_index(**physical_device.graphics_queue_family())
             .queue_priorities(&[1.0f32])
             .build();
         let device_features = ash::vk::PhysicalDeviceFeatures::builder().build();
@@ -79,7 +79,7 @@ impl Instance {
             .build();
         let device_raw = unsafe {
             self.raw
-                .create_device(physical_device.raw, &device_create_info, None)
+                .create_device(*physical_device.raw(), &device_create_info, None)
         }
         .context("Failed to create logical device")?;
         Ok(LogicalDevice::new(device_raw))
@@ -109,11 +109,13 @@ fn try_create_physical_device_with_graphics_queue(
                 .contains(ash::vk::QueueFlags::GRAPHICS)
                 .then(|| QueueFamilyIndex::<Graphics>::new(queue_family_index as u32))
         })
-        .map(|graphics_queue_family| PhysicalDevice {
-            raw: raw_physical_device,
-            device_type: props.device_type,
-            device_name: string_from_i8_array(props.device_name),
-            graphics_queue_family,
+        .map(|graphics_queue_family| {
+            PhysicalDevice::builder()
+                .raw(raw_physical_device)
+                .device_type(props.device_type)
+                .device_name(string_from_i8_array(props.device_name))
+                .graphics_queue_family(graphics_queue_family)
+                .build()
         })
 }
 

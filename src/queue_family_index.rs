@@ -1,7 +1,9 @@
 use std::{fmt, marker::PhantomData};
 
+#[derive(Default)]
 pub struct Graphics;
 
+#[derive(Default)]
 pub struct QueueFamilyIndex<T> {
     raw_index: u32,
     _phantom: PhantomData<T>,

@@ -19,7 +19,7 @@ fn main() -> anyhow::Result<()> {
         .context("No suitable physical device")?;
     let logical_device = instance.create_logical_device(physical_device)?;
     let _command_pool =
-        Rc::clone(&logical_device).create_command_pool(&physical_device.graphics_queue_family)?;
+        Rc::clone(&logical_device).create_command_pool(&physical_device.graphics_queue_family())?;
     trace!("Complete.");
     Ok(())
 }
